@@ -70,7 +70,7 @@ export default function ConfirmPage() {
   if (!hydrated || !state.transcript || !state.intent) return null;
 
   return (
-    <PatientShell>
+    <PatientShell screen="confirm">
       <h1 className="screen-title">{text.didWeUnderstand}</h1>
       <ConfirmationCard
         lead={understood?.summaryLead ?? text.understoodLead}
@@ -84,26 +84,28 @@ export default function ConfirmPage() {
         audioUrl={state.audioUrl}
         durationSeconds={state.durationSeconds}
       />
-      <SafetyNote>{text.safety}</SafetyNote>
-      {failed ? (
-        <p className="alert" role="alert">
-          {text.couldNotSend}
-        </p>
-      ) : null}
-      <div className="actions">
-        <ActionButton onClick={() => void send()} disabled={sending}>
-          {sending ? text.sending : text.yesSend}
-        </ActionButton>
-        <ActionButton
-          variant="ghost"
-          onClick={() => {
-            void start();
-            router.push("/record");
-          }}
-          disabled={sending}
-        >
-          {text.noSpeakAgain}
-        </ActionButton>
+      <div className="desk-side">
+        <SafetyNote>{text.safety}</SafetyNote>
+        {failed ? (
+          <p className="alert" role="alert">
+            {text.couldNotSend}
+          </p>
+        ) : null}
+        <div className="actions">
+          <ActionButton onClick={() => void send()} disabled={sending}>
+            {sending ? text.sending : text.yesSend}
+          </ActionButton>
+          <ActionButton
+            variant="ghost"
+            onClick={() => {
+              void start();
+              router.push("/record");
+            }}
+            disabled={sending}
+          >
+            {text.noSpeakAgain}
+          </ActionButton>
+        </div>
       </div>
     </PatientShell>
   );

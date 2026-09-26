@@ -72,7 +72,7 @@ export default function ProcessingPage() {
   const tooShort = error === "recording_too_short";
 
   return (
-    <PatientShell>
+    <PatientShell screen="processing">
       {error ? (
         <>
           <h1 className="screen-title">{tooShort ? text.couldNotHear : text.couldNotUnderstand}</h1>
@@ -97,14 +97,16 @@ export default function ProcessingPage() {
         </>
       ) : (
         <>
-          <h1 className="screen-title lift">{text.understanding}</h1>
-          <p className="screen-copy">{text.usuallySeconds}</p>
-          <ProcessingSteps labels={steps} activeIndex={activeIndex} />
-          <div className="actions">
-            <ActionButton variant="ghost" onClick={() => router.push("/home")}>
-              {text.cancel}
-            </ActionButton>
+          <div className="desk-main">
+            <h1 className="screen-title lift">{text.understanding}</h1>
+            <p className="screen-copy">{text.usuallySeconds}</p>
+            <div className="actions">
+              <ActionButton variant="ghost" onClick={() => router.push("/home")}>
+                {text.cancel}
+              </ActionButton>
+            </div>
           </div>
+          <ProcessingSteps labels={steps} activeIndex={activeIndex} />
         </>
       )}
     </PatientShell>

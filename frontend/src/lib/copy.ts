@@ -5,6 +5,7 @@ export type Copy = {
   changeLater: string;
   continue: string;
   howHelp: string;
+  homeNav: string;
   tapMic: string;
   speakInBalti: string;
   requestDoctor: string;
@@ -79,6 +80,7 @@ const english: Copy = {
   changeLater: "You can change it later.",
   continue: "Continue",
   howHelp: "How can we help?",
+  homeNav: "Home",
   tapMic: "Tap the microphone and tell us what you need.",
   speakInBalti: "Speak in Balti",
   requestDoctor: "Request a doctor",
@@ -153,6 +155,7 @@ const urdu: Copy = {
   changeLater: "اسے بعد میں بدل سکتے ہیں۔",
   continue: "جاری رکھیں",
   howHelp: "ہم کیا مدد کریں؟",
+  homeNav: "ہوم",
   tapMic: "مائیکروفون دبائیں اور بتائیں کہ آپ کو کیا چاہیے۔",
   speakInBalti: "بلتی میں بولیں",
   requestDoctor: "ڈاکٹر سے درخواست",

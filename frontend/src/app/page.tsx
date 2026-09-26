@@ -14,10 +14,10 @@ export default function LanguagePage() {
   const text = getCopy(state.language);
 
   return (
-    <PatientShell showLanguage={false}>
+    <PatientShell showLanguage={false} screen="language">
       <h1 className="screen-title">{text.chooseLanguage}</h1>
       <p className="screen-copy">{text.changeLater}</p>
-      <div>
+      <div className="choices">
         {LANGUAGES.map((language) => (
           <LanguageOption
             key={language.code}

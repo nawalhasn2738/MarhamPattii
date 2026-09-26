@@ -48,7 +48,7 @@ export default function RecordPage() {
   const error = errors[phase];
 
   return (
-    <PatientShell>
+    <PatientShell screen="record">
       {phase === "recording" || phase === "starting" ? (
         <>
           <div className="rec-label">

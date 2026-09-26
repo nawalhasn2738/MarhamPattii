@@ -30,11 +30,13 @@ export default function HomePage() {
   }
 
   return (
-    <PatientShell>
-      <h1 className="screen-title">{text.howHelp}</h1>
-      <p className="screen-copy">{text.tapMic}</p>
-      <MicButton label={text.tapToSpeak} onClick={() => openRecorder("mic")} />
-      <p className="speak-label">{text.speakInBalti}</p>
+    <PatientShell screen="home">
+      <div className="hero">
+        <h1 className="screen-title">{text.howHelp}</h1>
+        <p className="screen-copy">{text.tapMic}</p>
+        <MicButton label={text.tapToSpeak} onClick={() => openRecorder("mic")} />
+        <p className="speak-label">{text.speakInBalti}</p>
+      </div>
       <div className="actions">
         <QuickAction label={text.requestDoctor} onClick={() => openRecorder("doctor")} />
         <QuickAction label={text.findFacility} onClick={() => openRecorder("facility")} />

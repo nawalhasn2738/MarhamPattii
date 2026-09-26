@@ -21,7 +21,7 @@ export default function SentPage() {
   if (!hydrated || !state.requestId) return null;
 
   return (
-    <PatientShell>
+    <PatientShell screen="sent">
       <div className="ok">✓</div>
       <h1 className="screen-title center">{text.requestSent}</h1>
       <p className="screen-copy center">{text.providerWillReply}</p>

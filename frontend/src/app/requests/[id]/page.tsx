@@ -41,7 +41,7 @@ export default function RequestDetailPage() {
   }
 
   return (
-    <PatientShell>
+    <PatientShell screen="detail">
       {!hydrated ? null : !request ? (
         <>
           <h1 className="screen-title">{text.myRequests}</h1>

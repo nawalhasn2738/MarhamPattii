@@ -134,7 +134,7 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
     () => true,
     () => false,
   );
-  const hydrated = appliedVisit === storedVisit;
+  const hydrated = isClient && appliedVisit === storedVisit;
   const recoveredAudio = useStoredBlob(state.audioBlob ? undefined : state.audioKey);
 
   if (!hydrated) {

@@ -15,7 +15,7 @@ export default function RequestsPage() {
   const text = getCopy(state.language);
 
   return (
-    <PatientShell>
+    <PatientShell screen="requests">
       <h1 className="screen-title">{text.myRequests}</h1>
       {!hydrated ? null : state.requests.length === 0 ? (
         <p className="screen-copy">{text.noRequests}</p>

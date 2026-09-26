@@ -75,6 +75,10 @@ button:focus-visible {
   background: var(--bg);
 }
 
+.site-foot {
+  display: none;
+}
+
 .patient-phone {
   display: flex;
   width: 100%;
@@ -103,10 +107,22 @@ button:focus-visible {
   font-weight: 600;
 }
 
+.topbar-inner {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand,
 .topbar a {
   color: inherit;
   font-weight: 600;
   text-decoration: none;
+}
+
+.site-nav {
+  display: none;
 }
 
 .phone-body {
@@ -541,6 +557,20 @@ button:focus-visible {
   gap: 10px;
 }
 
+.desk-main,
+.desk-side,
+.page-wrap {
+  display: contents;
+}
+
+.screen-processing .steps {
+  order: 1;
+}
+
+.screen-processing .actions {
+  order: 2;
+}
+
 @keyframes wave-bar {
   0%,
   100% {
@@ -687,6 +717,426 @@ a.summary {
 
   .speak-label {
     margin-bottom: 8px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .stage,
+  .patient-phone,
+  .topbar {
+    background: #f7fbfb;
+  }
+
+  .patient-phone {
+    width: 100%;
+    max-width: none;
+  }
+
+  .topbar {
+    height: 72px;
+    padding: 0;
+    border-bottom: 1px solid #d5e2e5;
+    font-size: 15px;
+  }
+
+  .topbar-inner {
+    justify-content: flex-start;
+    gap: 8px;
+    width: min(880px, calc(100% - 80px));
+    height: 100%;
+    margin: 0 auto;
+  }
+
+  .brand {
+    font-size: 18px;
+    letter-spacing: -0.02em;
+  }
+
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-inline-start: 28px;
+  }
+
+  .site-nav a {
+    padding: 8px 12px;
+    border-radius: 999px;
+    color: #5b7078;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .site-nav a.on,
+  .site-nav a:hover {
+    background: #e6f2f3;
+    color: #0e4f5c;
+  }
+
+  .lang-chip {
+    margin-inline-start: auto;
+    padding: 8px 14px;
+    border: 1px solid #d5e2e5;
+    border-radius: 999px;
+    background: #e6f2f3;
+  }
+
+  .lang-chip:hover {
+    border-color: #0e4f5c;
+  }
+
+  .phone-body {
+    width: auto;
+    max-width: none;
+    align-self: stretch;
+    margin: 0;
+    padding: 28px 0;
+    overflow: visible;
+  }
+
+  .page-wrap {
+    display: block;
+    flex: none;
+    align-self: center;
+    width: min(880px, calc(100% - 80px));
+    margin-inline: auto;
+  }
+
+  .screen-sent .page-wrap,
+  .screen-record .page-wrap {
+    display: contents;
+  }
+
+  .site-foot {
+    display: block;
+    width: min(880px, calc(100% - 80px));
+    margin: auto auto 0;
+    padding: 18px 0 28px;
+    border-top: 1px solid #d5e2e5;
+    color: #5b7078;
+    font-size: 13px;
+  }
+
+  .screen-title {
+    font-size: 36px;
+    letter-spacing: -0.03em;
+  }
+
+  .patient-phone.urdu-ui .screen-title {
+    font-size: 40px;
+    line-height: 1.6;
+  }
+
+  .screen-copy {
+    max-width: 62ch;
+    font-size: 16px;
+  }
+
+  .screen-language,
+  .screen-home,
+  .screen-processing,
+  .screen-confirm,
+  .screen-requests,
+  .screen-detail {
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100dvh - 72px - 80px);
+    padding-top: 28px;
+    padding-bottom: 28px;
+  }
+
+  .screen-detail,
+  .screen-requests {
+    justify-content: flex-start;
+    padding-top: 48px;
+  }
+
+  .screen-language .screen-title {
+    margin: 0 0 8px;
+  }
+
+  .screen-language .screen-copy {
+    margin: 0;
+  }
+
+  .screen-language .choices {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .screen-language .lang {
+    align-items: flex-start;
+    min-height: 96px;
+    margin-bottom: 0;
+  }
+
+  .screen-language .actions {
+    width: calc((100% - 32px) / 3);
+    max-width: none;
+    margin-top: 24px;
+  }
+
+  .screen-home .page-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, max-content) 340px;
+    gap: 48px;
+    align-items: center;
+    width: max-content;
+    max-width: min(880px, calc(100% - 80px));
+  }
+
+  .screen-home .screen-title {
+    max-width: 14ch;
+    margin: 0;
+    font-size: 40px;
+    line-height: 1.15;
+  }
+
+  .patient-phone.urdu-ui .screen-home .screen-title {
+    max-width: 16ch;
+    font-size: 44px;
+    line-height: 1.5;
+  }
+
+  .screen-home .screen-copy {
+    max-width: 36ch;
+    margin: 12px 0 0;
+    font-size: 18px;
+  }
+
+  .screen-home .mic {
+    justify-self: start;
+    margin: 20px 0 10px;
+  }
+
+  .screen-home .speak-label {
+    margin: 0 0 32px;
+    text-align: start;
+  }
+
+  .screen-home .actions {
+    gap: 12px;
+    margin-top: 0;
+    padding: 18px;
+    border: 1px solid #d5e2e5;
+    border-radius: 16px;
+    background: #fff;
+  }
+
+  .screen-home .quick {
+    padding: 16px 18px;
+    font-size: 16px;
+  }
+
+  .screen-home .quick:hover,
+  .screen-requests a.summary:hover,
+  .screen-language .lang:hover {
+    background: #e6f2f3;
+  }
+
+  .btn:hover {
+    background: #0c4550;
+  }
+
+  .btn.ghost:hover {
+    background: #e6f2f3;
+  }
+
+  .screen-record,
+  .screen-sent {
+    justify-content: center;
+    width: min(560px, 100%);
+    min-height: 0;
+    margin: 12px auto 0;
+    padding: 36px 32px 28px;
+    border: 1px solid #d5e2e5;
+    border-radius: 16px;
+    background: #fff;
+  }
+
+  .screen-record .timer,
+  .screen-sent .screen-title {
+    font-size: 56px;
+  }
+
+  .screen-record .screen-copy,
+  .screen-sent .screen-copy {
+    max-width: none;
+  }
+
+  .screen-record .wave {
+    height: 120px;
+  }
+
+  .screen-record .stop-wrap {
+    margin-top: 8px;
+  }
+
+  .screen-processing:has(.steps) .page-wrap {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 48px;
+    width: max-content;
+    max-width: min(880px, calc(100% - 80px));
+  }
+
+  .screen-processing .desk-main {
+    display: flex;
+    width: min(420px, 100%);
+    min-width: 0;
+    flex: 0 1 auto;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .screen-processing .screen-title {
+    margin: 0 0 12px;
+    font-size: 42px;
+  }
+
+  .screen-processing .screen-copy {
+    margin: 0;
+  }
+
+  .screen-processing .steps {
+    order: 0;
+    width: min(100%, 380px);
+    flex: 0 0 380px;
+    align-self: center;
+    margin-top: 0;
+    padding: 8px 22px 12px;
+    border: 1px solid #d5e2e5;
+    border-radius: 16px;
+    background: #fff;
+  }
+
+  .screen-processing .actions {
+    max-width: 240px;
+    margin-top: 24px;
+  }
+
+  .screen-confirm .page-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.8fr);
+    gap: 28px 32px;
+    align-items: center;
+  }
+
+  .screen-confirm .screen-title {
+    margin: 0;
+  }
+
+  .screen-detail .page-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.75fr);
+    gap: 20px 32px;
+    align-items: start;
+  }
+
+  .screen-confirm .screen-title,
+  .screen-detail .screen-title {
+    grid-column: 1 / -1;
+  }
+
+  .screen-confirm .desk-side {
+    display: flex;
+    flex-direction: column;
+    grid-column: 2;
+    grid-row: 2;
+    gap: 16px;
+    align-self: center;
+  }
+
+  .screen-confirm .desk-side .note {
+    margin-top: 0;
+  }
+
+  .screen-confirm .summary,
+  .screen-detail .summary {
+    padding: 22px 24px;
+  }
+
+  .screen-confirm .summary .big,
+  .screen-detail .screen-copy {
+    font-size: 26px;
+  }
+
+  .screen-confirm .summary {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: center;
+  }
+
+  .screen-detail .note {
+    grid-column: 2;
+  }
+
+  .screen-confirm .actions {
+    padding: 18px;
+    border: 1px solid #d5e2e5;
+    border-radius: 16px;
+    background: #fff;
+  }
+
+  .screen-confirm .actions,
+  .screen-detail .actions,
+  .screen-requests .actions,
+  .screen-sent .actions {
+    margin-top: 8px;
+  }
+
+  .screen-confirm .desk-side .actions {
+    margin-top: 0;
+  }
+
+  .screen-detail .screen-copy,
+  .screen-detail .note,
+  .screen-detail .actions {
+    grid-column: 1;
+  }
+
+  .screen-detail .summary {
+    grid-column: 2;
+    grid-row: 2 / span 3;
+  }
+
+  .screen-detail .actions {
+    max-width: 280px;
+  }
+
+  .screen-requests .page-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 24px;
+    row-gap: 16px;
+    align-items: center;
+  }
+
+  .screen-requests .screen-title,
+  .screen-requests .screen-copy {
+    margin: 0;
+  }
+
+  .screen-requests .screen-copy,
+  .screen-requests .request-list {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .screen-requests .summary {
+    padding: 18px 22px;
+  }
+
+  .screen-requests .actions {
+    grid-column: 2;
+    grid-row: 1;
+    max-width: none;
+    margin-top: 0;
   }
 }
 
