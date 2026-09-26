@@ -15,9 +15,11 @@ export function ConfirmationCard({
   language,
   request,
   duration,
+  providerSummary,
   languageCaption = "Language",
   requestCaption = "Request",
   durationCaption = "How long",
+  providerSummaryCaption = "Provider summary",
   audioUrl,
   durationSeconds = 0,
 }: {
@@ -26,9 +28,11 @@ export function ConfirmationCard({
   language: string;
   request: string;
   duration: string;
+  providerSummary?: string;
   languageCaption?: string;
   requestCaption?: string;
   durationCaption?: string;
+  providerSummaryCaption?: string;
   audioUrl?: string;
   durationSeconds?: number;
 }) {
@@ -39,6 +43,7 @@ export function ConfirmationCard({
       <Row label={languageCaption} value={language} />
       <Row label={requestCaption} value={request} />
       <Row label={durationCaption} value={duration} />
+      {providerSummary ? <Row label={providerSummaryCaption} value={providerSummary} /> : null}
       {audioUrl ? <AudioPlayer src={audioUrl} fallbackDuration={durationSeconds} /> : null}
     </div>
   );

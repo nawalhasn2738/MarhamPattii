@@ -6,8 +6,9 @@ import { ActionButton } from "@/components/ActionButton";
 import { PatientShell } from "@/components/PatientShell";
 import { ProcessingSteps } from "@/components/ProcessingSteps";
 import { useRequest } from "@/context/RequestContext";
-import { transcribeAudio } from "@/lib/api";
+import { submitRecordedRequest } from "@/lib/api";
 import { getCopy } from "@/lib/copy";
+import { languageName } from "@/lib/languages";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -15,7 +16,7 @@ function delay(ms: number) {
 
 export default function ProcessingPage() {
   const router = useRouter();
-  const { state, hydrated, applyUnderstanding } = useRequest();
+  const { state, hydrated, applyUnderstanding, markSent } = useRequest();
   const text = getCopy(state.language);
   const steps = [text.stepSaved, text.stepListening, text.stepPreparing];
   const [attempt, setAttempt] = useState(0);
@@ -37,12 +38,29 @@ export default function ProcessingPage() {
 
     async function run() {
       try {
-        const result = await transcribeAudio(blob, controller.signal);
+        setActiveIndex(1);
+        const result = await submitRecordedRequest(blob, languageName(state.language), controller.signal);
         if (cancelled) return;
+
         setActiveIndex(2);
         await delay(450);
         if (cancelled) return;
-        applyUnderstanding(result);
+
+        const aiIntent = result.ai.intent;
+        applyUnderstanding({
+          transcript: result.ai.transcript || result.request.transcript || "",
+          intent: aiIntent?.intent || result.request.intent || "unclear",
+          urgency: aiIntent?.urgency || result.request.urgency || "unknown",
+          confidence: 1,
+          summary_for_provider: aiIntent?.summary_for_provider,
+          summary_english: aiIntent?.summary_english,
+          summary_urdu: aiIntent?.summary_urdu,
+        });
+        markSent({
+          id: result.request.id,
+          status: result.request.status || "pending",
+        });
+
         setActiveIndex(3);
         await delay(350);
         if (cancelled) return;
@@ -61,7 +79,7 @@ export default function ProcessingPage() {
       cancelled = true;
       controller.abort();
     };
-  }, [applyUnderstanding, attempt, hydrated, router, state.audioBlob, state.audioKey]);
+  }, [applyUnderstanding, attempt, hydrated, markSent, router, state.audioBlob, state.audioKey, state.language]);
 
   useEffect(() => {
     if (readyToConfirm && state.transcript) {

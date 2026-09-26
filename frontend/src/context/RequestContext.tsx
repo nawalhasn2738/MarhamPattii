@@ -39,6 +39,7 @@ export type RequestState = {
   confidence?: number;
   summaryLead?: string;
   summaryHeadline?: string;
+  providerSummary?: string;
   requestLabel?: string;
   durationLabel?: string;
   requestId?: string;
@@ -77,6 +78,7 @@ function clearedDraft(state: RequestState, audioUrl?: string): RequestState {
     confidence: undefined,
     summaryLead: undefined,
     summaryHeadline: undefined,
+    providerSummary: undefined,
     requestLabel: undefined,
     durationLabel: undefined,
     requestId: undefined,
@@ -115,6 +117,7 @@ function stateFromVisit(visit: StoredVisit): RequestState {
     confidence: visit.confidence,
     summaryLead: visit.summaryLead,
     summaryHeadline: visit.summaryHeadline,
+    providerSummary: visit.providerSummary,
     requestLabel: visit.requestLabel,
     durationLabel: visit.durationLabel,
     requestId: visit.requestId,
@@ -217,6 +220,7 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
         confidence: state.confidence,
         summaryLead: state.summaryLead,
         summaryHeadline: state.summaryHeadline,
+        providerSummary: state.providerSummary,
         requestLabel: state.requestLabel,
         durationLabel: state.durationLabel,
         requestId: state.requestId,
@@ -273,7 +277,8 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
           requires_human: copy.requiresHuman,
         },
         summaryLead: copy.summaryLead,
-        summaryHeadline: copy.summaryHeadline,
+        summaryHeadline: result.summary_for_provider ?? result.summary_english ?? copy.summaryHeadline,
+        providerSummary: result.summary_for_provider ?? result.summary_english,
         requestLabel: copy.requestLabel,
         durationLabel: copy.durationLabel,
       };
@@ -306,6 +311,7 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
         sentAt,
         confidence: current.confidence,
         transcript: current.transcript,
+        providerSummary: current.providerSummary,
         durationLabel: understood?.durationLabel ?? current.durationLabel,
         durationSeconds: current.durationSeconds,
         audioKey: current.audioBlob ? `request:${response.id}` : undefined,

@@ -13,6 +13,7 @@ export type StoredRequest = {
   audioKey?: string;
   confidence?: number;
   transcript?: string;
+  providerSummary?: string;
   durationLabel?: string;
   durationSeconds?: number;
   audioBase64?: string;
@@ -32,6 +33,7 @@ export type StoredVisit = {
   confidence?: number;
   summaryLead?: string;
   summaryHeadline?: string;
+  providerSummary?: string;
   requestLabel?: string;
   durationLabel?: string;
   requestId?: string;

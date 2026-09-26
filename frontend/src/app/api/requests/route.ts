@@ -9,6 +9,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 900;
 
 const execFileAsync = promisify(execFile);
 const AUDIO_BUCKET = "audio-recordings";
@@ -60,6 +61,7 @@ function createServerSupabaseClient() {
   const url = requiredEnv("NEXT_PUBLIC_SUPABASE_URL");
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
     requiredEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
 
   return createClient(url, key, {
