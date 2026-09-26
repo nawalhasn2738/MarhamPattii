@@ -10,8 +10,11 @@ Patients speak naturally in Balti, and MarhamPattii turns that audio into an act
 
 Many patients in remote Gilgit-Baltistan communities may be more comfortable speaking Balti than typing or describing symptoms in English or Urdu. MarhamPattii helps bridge that gap by accepting a patient audio recording, transcribing it with a Balti ASR pipeline, extracting structured medical communication intent with Groq, storing the original audio in Supabase Storage, and saving the request metadata in Supabase Postgres for a provider dashboard.
 
-The backend currently supports:
+The current integrated app supports:
 
+- Frontend UI screens from the `frontend-fizza` branch merged into `AI-iman`.
+- Patient-side recording, processing, confirmation, and fallback demo-audio flows.
+- Provider dashboard request list, request detail view, audio playback, and status actions.
 - Uploading patient audio through a Next.js App Router API route.
 - Temporarily saving audio locally for Python ASR processing.
 - Running the Python ASR wrapper as a JSON-only child process.
@@ -32,6 +35,25 @@ Patient Voice
   -> Supabase Database: requests table
   -> Provider Dashboard
 ```
+
+
+## Current development status
+
+The frontend teammate's UI branch, `frontend-fizza`, has been successfully merged into the active working branch, `AI-iman`. The workspace now contains both the polished patient/provider UI and the verified backend AI pipeline.
+
+Verified and integrated:
+
+- Backend AI/ASR pipeline: local Python wrapper, Balti Whisper ASR, and Groq structured intent extraction are wired through `POST /api/requests`.
+- Supabase wiring: audio uploads to the public `audio-recordings` bucket and request rows are inserted into the `requests` table.
+- Patient frontend: recording flow, processing state, confirmation screen, `Speak Again`, final sent state, and `Use Demo Audio` fallback are integrated.
+- Provider dashboard: live request fetching, request cards, detail page, Supabase `audio_url` playback, and status updates are integrated.
+- QA safeguards: `test-e2e-audio.js`, `/api/demo-audio`, `.env.example`, and Vercel deployment notes are present.
+
+Active phases:
+
+1. UI-to-API wiring: implemented and build-verified; continue polishing patient copy and edge-case handling.
+2. Provider dashboard data fetching: implemented through `GET /api/requests/dashboard` and `PATCH /api/requests/[id]`; confidence display is pending a future database column.
+3. E2E browser testing: API-level E2E is verified; final manual browser walkthrough should be run before presentation using live microphone and the `Use Demo Audio` fallback.
 
 ## Repository structure
 
@@ -101,6 +123,7 @@ Create `frontend/.env.local` with:
 ```env
 GROQ_API_KEY=your_groq_key_here
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
 
@@ -305,4 +328,15 @@ Then commit only intentional source, configuration, test, and documentation chan
 
 ## Current handoff status
 
-Backend/AI integration is implemented and ready for team testing. If the E2E test reaches Supabase but fails with an RLS error, apply `database/supabase_policies.sql` in the Supabase SQL Editor or configure a server-side `SUPABASE_SERVICE_ROLE_KEY`.
+The project is in final QA and production handover state. Backend AI/ASR, Supabase storage/database wiring, patient UI flow, provider dashboard, demo fallback mode, and production build checks are integrated and verified on branch `AI-iman`.
+
+Before a live presentation, run a final manual browser test:
+
+1. Start `cd frontend; npm run dev`.
+2. Open `http://localhost:3000/home`.
+3. Test live mic recording, or click `Use Demo Audio`.
+4. Review the confirmation screen.
+5. Open `/requests` and verify the provider dashboard shows the new request.
+6. Play the original audio and test `Accept` / `Ask for Clarification`.
+
+If an E2E test reaches Supabase but fails with an RLS error, apply `database/supabase_policies.sql` in the Supabase SQL Editor or configure a server-side `SUPABASE_SERVICE_ROLE_KEY`.
