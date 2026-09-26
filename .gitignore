@@ -1,2 +1,5 @@
 .env.local
 ai-service/.env.local
+ai-service/venv/
+ai-service/audio/*.wav
+!ai-service/audio/test2.wav

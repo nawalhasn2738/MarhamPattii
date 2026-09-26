@@ -30,7 +30,7 @@ import re
 # ---------------------------------------------------------------------------
 
 ASR_MODEL_ID = "mohdali1/whisper-small-balti"
-LLM_MODEL_ID = "llama-3.3-70b-versatile"
+LLM_MODEL_ID = "openai/gpt-oss-20b"
 MIN_TRANSCRIPT_WORDS = 2  # below this -> treat as unclear / ask patient to repeat
 
 SYSTEM_PROMPT = """You are a communication assistant that converts patient requests \
@@ -212,8 +212,12 @@ if __name__ == "__main__":
         print("Usage: python test_pipeline.py path/to/audio.wav")
         sys.exit(1)
 
+    from pathlib import Path
     from dotenv import load_dotenv
-    load_dotenv(".env.local")
+    # Always look for .env.local next to this script (ai-service/.env.local),
+    # regardless of which directory the script was launched from.
+    env_path = Path(__file__).resolve().parent.parent / ".env.local"
+    load_dotenv(env_path)
 
     output = run_pipeline(sys.argv[1])
     print("\n=== PIPELINE RESULT ===")
