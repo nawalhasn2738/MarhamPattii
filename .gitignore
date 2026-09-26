@@ -10,3 +10,13 @@ node_modules/
 frontend/tmp/
 __pycache__/
 *.pyc
+.next-dev-*.log
+ai-service/.hf-home/
+ai-service/.pip-tmp/
+.e2e-audio*.log
+ai-service/.asr-direct*.log
+ai-service/models/*
+!ai-service/models/.gitkeep
+.model-download*.log
+.wrapper-direct*.log
+ai-service/.hf-download*.log

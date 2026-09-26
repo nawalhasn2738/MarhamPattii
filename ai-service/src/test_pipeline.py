@@ -29,8 +29,20 @@ import re
 # Config
 # ---------------------------------------------------------------------------
 
-ASR_MODEL_ID = "mohdali1/whisper-small-balti"
-LLM_MODEL_ID = "llama-3.3-70b-versatile"
+AI_SERVICE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+LOCAL_ASR_MODEL_DIR = os.path.join(AI_SERVICE_ROOT, "models", "whisper-small-balti")
+HF_HOME = os.path.join(AI_SERVICE_ROOT, ".hf-home")
+os.environ.setdefault("HF_HOME", HF_HOME)
+os.environ.setdefault("HF_HUB_CACHE", os.path.join(HF_HOME, "hub"))
+os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
+
+ASR_MODEL_ID = os.environ.get("ASR_MODEL_ID") or (
+    LOCAL_ASR_MODEL_DIR
+    if os.path.exists(os.path.join(LOCAL_ASR_MODEL_DIR, "config.json"))
+    else "mohdali1/whisper-small-balti"
+)
+LLM_MODEL_ID = os.environ.get("GROQ_MODEL_ID", "openai/gpt-oss-20b")
 MIN_TRANSCRIPT_WORDS = 2  # below this -> treat as unclear / ask patient to repeat
 
 SYSTEM_PROMPT = """You are a communication assistant that converts patient requests \
@@ -83,10 +95,13 @@ def transcribe_audio(asr, audio_path: str) -> dict:
         return {"ok": False, "error": "audio_file_not_found", "text": ""}
 
     try:
-        result = asr(audio_path)
+        import librosa
+
+        audio_array, sampling_rate = librosa.load(audio_path, sr=16000, mono=True)
+        result = asr({"array": audio_array, "sampling_rate": sampling_rate})
         text = (result.get("text") or "").strip()
     except Exception as e:
-        # Error handling: ASR crashes / model error
+        # Error handling: ASR crashes / model/audio decoding error
         return {"ok": False, "error": f"asr_failed: {e}", "text": ""}
 
     if not text:
@@ -221,4 +236,4 @@ if __name__ == "__main__":
 
     output = run_pipeline(sys.argv[1])
     print("\n=== PIPELINE RESULT ===")
-    print(json.dumps(output, indent=2, ensure_ascii=False))
+    print(json.dumps(output, indent=2, ensure_ascii=True))

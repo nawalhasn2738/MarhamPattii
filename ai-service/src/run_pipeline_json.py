@@ -29,7 +29,7 @@ def main() -> int:
                     "transcript": None,
                     "intent": None,
                 },
-                ensure_ascii=False,
+                ensure_ascii=True,
             )
         )
         return 1
@@ -65,7 +65,7 @@ def main() -> int:
         if logs:
             output["logs"] = logs
 
-        print(json.dumps(output, ensure_ascii=False))
+        print(json.dumps(output, ensure_ascii=True))
         return 0
     except Exception as error:
         print(
@@ -77,7 +77,7 @@ def main() -> int:
                     "intent": None,
                     "llm_model": LLM_MODEL_ID,
                 },
-                ensure_ascii=False,
+                ensure_ascii=True,
             )
         )
         return 1

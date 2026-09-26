@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -155,12 +156,20 @@ function normalizePipelineProcessError(error: unknown): PipelineExecutionError {
 async function runPythonPipeline(audioPath: string): Promise<PipelineResult> {
   const aiServiceRoot = path.resolve(process.cwd(), "..", "ai-service");
   const scriptPath = path.join(aiServiceRoot, "src", "run_pipeline_json.py");
-  const pythonBin = process.env.PYTHON_BIN ?? "python";
+  const localVenvPython = path.join(aiServiceRoot, "venv", "Scripts", "python.exe");
+  const hfHome = path.join(aiServiceRoot, ".hf-home");
+  const pythonBin = process.env.PYTHON_BIN ?? (existsSync(localVenvPython) ? localVenvPython : "python");
   const options = {
     cwd: aiServiceRoot,
-    env: process.env,
+    env: {
+      ...process.env,
+      HF_HOME: process.env.HF_HOME ?? hfHome,
+      HF_HUB_CACHE: process.env.HF_HUB_CACHE ?? path.join(hfHome, "hub"),
+      HF_HUB_DISABLE_XET: process.env.HF_HUB_DISABLE_XET ?? "1",
+      HF_HUB_DISABLE_SYMLINKS_WARNING: process.env.HF_HUB_DISABLE_SYMLINKS_WARNING ?? "1",
+    },
     maxBuffer: 1024 * 1024 * 10,
-    timeout: 1000 * 60 * 5,
+    timeout: 1000 * 60 * 15,
     windowsHide: true,
   };
 
@@ -254,9 +263,22 @@ export async function POST(request: Request) {
 
     if (uploadError) {
       console.error("Supabase audio upload failed:", uploadError);
+
+      const isAccessDenied =
+        uploadError.message.includes("row-level security") ||
+        uploadError.message.includes("AccessDenied") ||
+        uploadError.name === "StorageApiError";
+
       return NextResponse.json(
-        { success: false, error: "Failed to upload audio." },
-        { status: 500 },
+        {
+          success: false,
+          error: isAccessDenied
+            ? "Supabase Storage denied the audio upload. Add a storage policy or set SUPABASE_SERVICE_ROLE_KEY."
+            : "Failed to upload audio.",
+          code: isAccessDenied ? "storage_access_denied" : "storage_upload_failed",
+          details: uploadError.message,
+        },
+        { status: isAccessDenied ? 403 : 500 },
       );
     }
 

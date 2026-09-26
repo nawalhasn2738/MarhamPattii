@@ -63,7 +63,7 @@ patient voice requests.
        "requires_human": true,
        "summary_for_provider": "..."
      },
-     "llm_model": "llama-3.3-70b-versatile"
+     "llm_model": "openai/gpt-oss-20b"
    }
    ```
 
@@ -114,6 +114,7 @@ include:
 
 ```text
 GROQ_API_KEY=...
+GROQ_MODEL_ID=openai/gpt-oss-20b
 ```
 
 ## Local Testing
