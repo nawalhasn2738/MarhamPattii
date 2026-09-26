@@ -30,7 +30,7 @@ import re
 # ---------------------------------------------------------------------------
 
 ASR_MODEL_ID = "mohdali1/whisper-small-balti"
-LLM_MODEL_ID = "openai/gpt-oss-20b"
+LLM_MODEL_ID = "llama-3.3-70b-versatile"
 MIN_TRANSCRIPT_WORDS = 2  # below this -> treat as unclear / ask patient to repeat
 
 SYSTEM_PROMPT = """You are a communication assistant that converts patient requests \

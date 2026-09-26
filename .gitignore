@@ -3,3 +3,10 @@ ai-service/.env.local
 ai-service/venv/
 ai-service/audio/*.wav
 !ai-service/audio/test2.wav
+
+node_modules/
+.next/
+.npm-cache/
+frontend/tmp/
+__pycache__/
+*.pyc
