@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ActionButton } from "@/components/ActionButton";
 import { PatientShell } from "@/components/PatientShell";
+import { RoleGuard } from "@/components/RoleGuard";
 import { ProcessingSteps } from "@/components/ProcessingSteps";
 import { useRequest } from "@/context/RequestContext";
 import { submitRecordedRequest } from "@/lib/api";
@@ -90,7 +91,8 @@ export default function ProcessingPage() {
   const tooShort = error === "recording_too_short";
 
   return (
-    <PatientShell>
+    <RoleGuard role="patient">
+      <PatientShell>
       {error ? (
         <>
           <h1 className="screen-title">{tooShort ? text.couldNotHear : text.couldNotUnderstand}</h1>
@@ -125,6 +127,7 @@ export default function ProcessingPage() {
           </div>
         </>
       )}
-    </PatientShell>
+      </PatientShell>
+    </RoleGuard>
   );
 }

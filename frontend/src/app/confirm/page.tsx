@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ActionButton } from "@/components/ActionButton";
 import { ConfirmationCard } from "@/components/ConfirmationCard";
 import { PatientShell } from "@/components/PatientShell";
+import { RoleGuard } from "@/components/RoleGuard";
 import { SafetyNote } from "@/components/SafetyNote";
 import { useRecorder } from "@/context/RecorderContext";
 import { useRequest } from "@/context/RequestContext";
@@ -61,7 +62,8 @@ export default function ConfirmPage() {
   if (!hydrated || !state.transcript || !state.intent || !state.requestId) return null;
 
   return (
-    <PatientShell>
+    <RoleGuard role="patient">
+      <PatientShell>
       <h1 className="screen-title">{text.didWeUnderstand}</h1>
       <ConfirmationCard
         lead={understood?.summaryLead ?? text.understoodLead}
@@ -83,6 +85,9 @@ export default function ConfirmPage() {
         </p>
       ) : null}
       <div className="actions">
+        <ActionButton variant="ghost" onClick={() => router.push("/record")} disabled={sending}>
+          Back to recording
+        </ActionButton>
         <ActionButton onClick={() => void send()} disabled={sending}>
           {sending ? text.sending : text.yesSend}
         </ActionButton>
@@ -98,6 +103,7 @@ export default function ConfirmPage() {
           {text.noSpeakAgain}
         </ActionButton>
       </div>
-    </PatientShell>
+      </PatientShell>
+    </RoleGuard>
   );
 }

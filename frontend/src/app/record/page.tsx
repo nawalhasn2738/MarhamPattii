@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { ActionButton } from "@/components/ActionButton";
 import { PatientShell } from "@/components/PatientShell";
+import { RoleGuard } from "@/components/RoleGuard";
 import { RecordingTimer } from "@/components/RecordingTimer";
 import { Waveform } from "@/components/Waveform";
 import { useRecorder } from "@/context/RecorderContext";
@@ -48,7 +49,8 @@ export default function RecordPage() {
   const error = errors[phase];
 
   return (
-    <PatientShell>
+    <RoleGuard role="patient">
+      <PatientShell>
       {phase === "recording" || phase === "starting" ? (
         <>
           <div className="rec-label">
@@ -83,6 +85,7 @@ export default function RecordPage() {
           </div>
         </>
       ) : null}
-    </PatientShell>
+      </PatientShell>
+    </RoleGuard>
   );
 }

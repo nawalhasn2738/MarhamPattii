@@ -726,3 +726,148 @@ a.summary {
 .dashboard-actions {
   margin-top: 12px;
 }
+.quick:hover:not(:disabled),
+.quick:focus-visible {
+  border-color: #0e4f5c;
+  background: #e6f2f3;
+  color: #0e4f5c;
+  transform: translateY(-1px);
+}
+
+.quick:active:not(:disabled) {
+  transform: translateY(0);
+  background: #d7ebee;
+}
+
+.quick:disabled {
+  pointer-events: none;
+}
+.welcome-hero {
+  display: grid;
+  gap: 8px;
+  margin: 22px 0 20px;
+  text-align: center;
+}
+
+.brand-pill {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0 auto 4px;
+  border-radius: 999px;
+  background: #e6f2f3;
+  color: #0e4f5c;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.role-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.role-card {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  border: 1.5px solid #d5e2e5;
+  border-radius: 18px;
+  background: #fff;
+  color: #14262b;
+  text-align: start;
+  box-shadow: 0 10px 24px rgba(14, 79, 92, 0.06);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.role-card.primary {
+  border-color: #0e4f5c;
+  background: linear-gradient(135deg, #0e4f5c, #123d45);
+  color: #fff;
+}
+
+.role-card:hover,
+.role-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: #0e4f5c;
+  box-shadow: 0 14px 30px rgba(14, 79, 92, 0.14);
+}
+
+.role-card:active {
+  transform: translateY(0);
+}
+
+.role-eyebrow {
+  color: #a8620a;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.role-card.primary .role-eyebrow {
+  color: #f8d28e;
+}
+
+.role-title {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.role-body {
+  color: #5b7078;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.role-card.primary .role-body {
+  color: #d8ecef;
+}
+
+.role-action {
+  margin-top: 4px;
+  color: #0e4f5c;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.role-card.primary .role-action {
+  color: #fff;
+}
+.topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-chip {
+  border-radius: 999px;
+  background: #e6f2f3;
+  color: #0e4f5c;
+  padding: 3px 7px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.topbar-link {
+  border: 0;
+  background: transparent;
+  color: #0e4f5c;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.topbar-link:hover,
+.topbar-link:focus-visible {
+  text-decoration: underline;
+}

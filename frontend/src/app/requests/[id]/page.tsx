@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ActionButton } from "@/components/ActionButton";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { PatientShell } from "@/components/PatientShell";
+import { RoleGuard } from "@/components/RoleGuard";
 import { SafetyNote } from "@/components/SafetyNote";
 import { fetchDashboardRequests, updateRequestStatus, type ProviderRequest } from "@/lib/api";
 import { displaySentAt } from "@/lib/format";
@@ -67,7 +68,8 @@ export default function RequestDetailPage() {
   }
 
   return (
-    <PatientShell>
+    <RoleGuard role="provider">
+      <PatientShell>
       <h1 className="screen-title">Request Details</h1>
 
       {loading ? <p className="screen-copy">Loading request...</p> : null}
@@ -135,6 +137,7 @@ export default function RequestDetailPage() {
           Back to dashboard
         </Link>
       </div>
-    </PatientShell>
+      </PatientShell>
+    </RoleGuard>
   );
 }

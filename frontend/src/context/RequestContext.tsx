@@ -12,6 +12,7 @@ import {
   subscribeVisit,
   writeVisit,
   type EntryKind,
+  type UserRole,
   type StoredRequest,
   type StoredVisit,
 } from "@/lib/session";
@@ -30,6 +31,7 @@ export type SavedRequest = StoredRequest;
 
 export type RequestState = {
   language: LanguageCode;
+  role?: UserRole;
   entry?: EntryKind;
   audioBlob?: Blob;
   audioUrl?: string;
@@ -53,6 +55,8 @@ type RequestContextValue = {
   state: RequestState;
   hydrated: boolean;
   setLanguage: (language: LanguageCode) => void;
+  setRole: (role: UserRole) => void;
+  logout: () => void;
   beginRequest: (entry: EntryKind) => void;
   clearDraft: () => void;
   setAudio: (blob: Blob, durationSeconds: number) => void;
@@ -101,6 +105,7 @@ function stateFromVisit(visit: StoredVisit): RequestState {
 
   return {
     language: visit.language,
+    role: visit.role,
     entry: visit.entry,
     audioBlob,
     audioUrl,
@@ -208,6 +213,7 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
 
       writeVisit({
         language: state.language,
+        role: state.role,
         entry: state.entry,
         audioBase64,
         audioType,
@@ -236,6 +242,15 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
   const setLanguage = useCallback((language: LanguageCode) => {
     setState((current) => ({ ...current, language }));
   }, []);
+
+  const setRole = useCallback((role: UserRole) => {
+    setState((current) => ({ ...current, role }));
+  }, []);
+
+  const logout = useCallback(() => {
+    releaseAudio();
+    setState((current) => ({ ...clearedDraft(current), role: undefined, requests: current.requests }));
+  }, [releaseAudio]);
 
   const clearDraft = useCallback(() => {
     releaseAudio();
@@ -331,13 +346,15 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
       state,
       hydrated,
       setLanguage,
+      setRole,
+      logout,
       beginRequest,
       clearDraft,
       setAudio,
       applyUnderstanding,
       markSent,
     }),
-    [state, hydrated, setLanguage, beginRequest, clearDraft, setAudio, applyUnderstanding, markSent],
+    [state, hydrated, setLanguage, setRole, logout, beginRequest, clearDraft, setAudio, applyUnderstanding, markSent],
   );
 
   return <RequestContext.Provider value={value}>{children}</RequestContext.Provider>;

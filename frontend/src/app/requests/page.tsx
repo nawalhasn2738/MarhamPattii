@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ActionButton } from "@/components/ActionButton";
 import { PatientShell } from "@/components/PatientShell";
+import { RoleGuard } from "@/components/RoleGuard";
 import { fetchDashboardRequests, updateRequestStatus, type ProviderRequest } from "@/lib/api";
 import { displaySentAt } from "@/lib/format";
 
@@ -65,7 +66,8 @@ export default function RequestsPage() {
   }
 
   return (
-    <PatientShell>
+    <RoleGuard role="provider">
+      <PatientShell>
       <h1 className="screen-title">Provider Dashboard</h1>
       <p className="screen-copy">
         Incoming patient voice requests from Supabase. {pendingCount} request{pendingCount === 1 ? "" : "s"} pending.
@@ -121,6 +123,7 @@ export default function RequestsPage() {
           </article>
         ))}
       </div>
-    </PatientShell>
+      </PatientShell>
+    </RoleGuard>
   );
 }

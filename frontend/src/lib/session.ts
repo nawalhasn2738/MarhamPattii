@@ -1,10 +1,12 @@
 const STORAGE_KEY = "marhampattii-patient-visit";
 
 export type EntryKind = "doctor" | "facility" | "mic";
+export type UserRole = "patient" | "provider";
 
 export type StoredRequest = {
   id: string;
   language: "ur" | "en" | "bft";
+  role?: UserRole;
   entry?: EntryKind;
   summary: string;
   requestLabel: string;
@@ -22,6 +24,7 @@ export type StoredRequest = {
 
 export type StoredVisit = {
   language: "ur" | "en" | "bft";
+  role?: UserRole;
   entry?: EntryKind;
   audioBase64?: string;
   audioType?: string;

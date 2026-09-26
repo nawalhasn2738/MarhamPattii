@@ -1,38 +1,69 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ActionButton } from "@/components/ActionButton";
-import { LanguageOption } from "@/components/LanguageOption";
 import { PatientShell } from "@/components/PatientShell";
 import { useRequest } from "@/context/RequestContext";
-import { getCopy } from "@/lib/copy";
-import { LANGUAGES } from "@/lib/languages";
 
-export default function LanguagePage() {
+function RoleCard({
+  eyebrow,
+  title,
+  body,
+  action,
+  onClick,
+  primary = false,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  action: string;
+  onClick: () => void;
+  primary?: boolean;
+}) {
+  return (
+    <button type="button" className={primary ? "role-card primary" : "role-card"} onClick={onClick}>
+      <span className="role-eyebrow">{eyebrow}</span>
+      <span className="role-title">{title}</span>
+      <span className="role-body">{body}</span>
+      <span className="role-action">{action}</span>
+    </button>
+  );
+}
+
+export default function RoleSelectionPage() {
   const router = useRouter();
-  const { state, setLanguage } = useRequest();
-  const text = getCopy(state.language);
+  const { setRole } = useRequest();
 
   return (
     <PatientShell showLanguage={false}>
-      <h1 className="screen-title">{text.chooseLanguage}</h1>
-      <p className="screen-copy">{text.changeLater}</p>
-      <div>
-        {LANGUAGES.map((language) => (
-          <LanguageOption
-            key={language.code}
-            tag={language.tag}
-            title={language.title}
-            hint={language.hint}
-            urdu={language.urdu}
-            selected={state.language === language.code}
-            onSelect={() => setLanguage(language.code)}
-          />
-        ))}
+      <section className="welcome-hero">
+        <span className="brand-pill">MarhamPattii</span>
+        <h1 className="screen-title center">Choose your portal</h1>
+        <p className="screen-copy center">
+          A voice-first Balti healthcare bridge for patients and providers.
+        </p>
+      </section>
+
+      <div className="role-grid" aria-label="Choose your role">
+        <RoleCard
+          primary
+          eyebrow="For patients"
+          title="Patient Portal"
+          body="Record a Balti voice request and review what the system understood."
+          action="Start voice request"
+          onClick={() => { setRole("patient"); router.push("/home"); }}
+        />
+        <RoleCard
+          eyebrow="For providers"
+          title="Provider Dashboard"
+          body="Review incoming requests, play original audio, and update request status."
+          action="Open dashboard"
+          onClick={() => { setRole("provider"); router.push("/requests"); }}
+        />
       </div>
-      <div className="actions">
-        <ActionButton onClick={() => router.push("/home")}>{text.continue}</ActionButton>
-      </div>
+
+      <p className="note">
+        Hackathon MVP: this screen simulates role selection. Full authentication and role-based access can be added with Supabase Auth later.
+      </p>
     </PatientShell>
   );
 }
