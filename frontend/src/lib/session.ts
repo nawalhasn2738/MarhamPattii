@@ -40,6 +40,7 @@ export type StoredVisit = {
   requestLabel?: string;
   durationLabel?: string;
   requestId?: string;
+  draftToken?: string;
   status?: string;
   sentAt?: string;
   audioKey?: string;

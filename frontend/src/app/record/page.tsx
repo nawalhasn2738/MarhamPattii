@@ -44,6 +44,11 @@ export default function RecordPage() {
     unsupported: { title: text.recordingUnavailable, body: text.openBrowser, action: text.tryAgain },
     "too-short": { title: text.tooShort, body: text.speakLonger, action: text.recordAgain },
     silent: { title: text.silentTitle, body: text.silentBody, action: text.recordAgain },
+    "invalid-audio": {
+      title: text.micFailed,
+      body: "Recording failed or the audio format is unsupported. Please try again.",
+      action: text.recordAgain,
+    },
     error: { title: text.micFailed, body: text.tryAgain, action: text.tryAgain },
   };
   const error = errors[phase];

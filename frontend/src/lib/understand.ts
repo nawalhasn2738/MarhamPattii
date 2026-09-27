@@ -1,10 +1,9 @@
-import type { TranscribeResponse } from "@/lib/api";
+import type { AsrResponse, IntentResponse } from "@/lib/aiTypes";
 import { getCopy } from "@/lib/copy";
 import type { LanguageCode } from "@/lib/languages";
 import type { EntryKind } from "@/lib/session";
 
-export const SAMPLE_TRANSCRIPT =
-  "I want to talk to a doctor about my problem. It has been going on for several days.";
+type UnderstandingInput = AsrResponse & Pick<IntentResponse, "intent" | "urgency"> & Partial<IntentResponse>;
 
 export type Understanding = {
   summaryLead: string;
@@ -27,15 +26,14 @@ function durationLabel(urgency: string, text: ReturnType<typeof getCopy>) {
 }
 
 export function describeUnderstanding(
-  result: TranscribeResponse,
+  result: UnderstandingInput,
   entry: EntryKind | undefined,
   language: LanguageCode,
 ): Understanding {
   const text = getCopy(language);
   const heard = result.transcript.trim();
-  const sample = heard === SAMPLE_TRANSCRIPT;
 
-  if (heard && !sample) {
+  if (heard) {
     return {
       summaryLead: text.understoodLead,
       summaryHeadline: heard,

@@ -1,23 +1,24 @@
-type StepState = "done" | "now" | "pending";
+export type ProcessingStepStatus = "pending" | "active" | "success" | "error";
 
-function stepState(index: number, activeIndex: number): StepState {
-  if (index < activeIndex) return "done";
-  if (index === activeIndex) return "now";
-  return "pending";
-}
+export type ProcessingStep = {
+  label: string;
+  status: ProcessingStepStatus;
+};
 
-export function ProcessingSteps({ labels, activeIndex }: { labels: string[]; activeIndex: number }) {
+export function ProcessingSteps({ steps }: { steps: ProcessingStep[] }) {
   return (
-    <ol className="steps">
-      {labels.map((label, index) => {
-        const state = stepState(index, activeIndex);
-        return (
-          <li key={label} className={state === "pending" ? undefined : state}>
-            <b>{state === "done" ? "✓" : ""}</b>
-            {label}
-          </li>
-        );
-      })}
+    <ol className="steps" aria-live="polite">
+      {steps.map((step) => (
+        <li key={step.label} className={step.status}>
+          <b aria-hidden="true">
+            {step.status === "success" ? "✓" : step.status === "error" ? "!" : ""}
+          </b>
+          <span>{step.label}</span>
+          <span className="sr-only">
+            {step.status === "active" ? "In progress" : step.status === "success" ? "Complete" : step.status === "error" ? "Failed" : "Waiting"}
+          </span>
+        </li>
+      ))}
     </ol>
   );
 }

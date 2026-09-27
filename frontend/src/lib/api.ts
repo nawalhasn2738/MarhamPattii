@@ -1,36 +1,15 @@
-export type TranscribeResponse = {
-  transcript: string;
-  intent: string;
-  urgency: string;
-  confidence: number;
-  summary_for_provider?: string;
-  summary_english?: string;
-  summary_urdu?: string;
-};
+import { providerAuthorizationHeaders } from "@/lib/supabaseBrowser";
+import type { AsrResponse, IntentResponse, UnderstandingResponse } from "@/lib/aiTypes";
 
-export type SubmitRequestBody = {
+export type { AsrResponse, IntentResponse, UnderstandingResponse } from "@/lib/aiTypes";
+
+export type SubmitRequestBody = UnderstandingResponse & {
   language: string;
-  transcript: string;
-  intent: string;
-  urgency: string;
-  confidence: number;
-  summary_for_provider?: string;
-  summary_english?: string;
-  summary_urdu?: string;
 };
 
 export type SubmitRequestResponse = {
   id: string;
   status: string;
-};
-
-type BackendIntent = {
-  intent?: string;
-  urgency?: string;
-  summary_english?: string;
-  summary_urdu?: string;
-  summary_for_provider?: string;
-  requires_human?: boolean;
 };
 
 type BackendRequestRecord = {
@@ -47,14 +26,40 @@ type BackendRequestRecord = {
 export type SubmitRecordedRequestResponse = {
   success: true;
   request: BackendRequestRecord;
+  draft_token: string;
   ai: {
     status?: string;
     transcript?: string;
-    intent?: BackendIntent | null;
+    confidence?: number | null;
+    intent?: Partial<IntentResponse> | null;
     llm_model?: string;
     note?: string;
   };
 };
+
+export class ApiClientError extends Error {
+  constructor(
+    message: string,
+    readonly code: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiClientError";
+  }
+}
+
+async function apiError(response: Response): Promise<ApiClientError> {
+  try {
+    const body = (await response.json()) as { error?: string; code?: string };
+    return new ApiClientError(
+      body.error ?? "We couldn't process your request. Please try again.",
+      body.code ?? "request_failed",
+      response.status,
+    );
+  } catch {
+    return new ApiClientError("We couldn't process your request. Please try again.", "request_failed", response.status);
+  }
+}
 
 async function readError(response: Response) {
   try {
@@ -84,7 +89,7 @@ export async function submitRecordedRequest(
 
   const response = await fetch("/api/requests", { method: "POST", body, signal });
   if (!response.ok) {
-    throw new Error(await readError(response));
+    throw await apiError(response);
   }
 
   const payload = (await response.json()) as SubmitRecordedRequestResponse | { success?: false; error?: string };
@@ -95,7 +100,7 @@ export async function submitRecordedRequest(
   return payload;
 }
 
-export async function transcribeAudio(audio: Blob, signal?: AbortSignal): Promise<TranscribeResponse> {
+export async function transcribeAudio(audio: Blob, signal?: AbortSignal): Promise<AsrResponse> {
   const body = new FormData();
   body.append("audio", audio, audioFileName(audio));
 
@@ -103,7 +108,7 @@ export async function transcribeAudio(audio: Blob, signal?: AbortSignal): Promis
   if (!response.ok) {
     throw new Error(await readError(response));
   }
-  return response.json() as Promise<TranscribeResponse>;
+  return response.json() as Promise<AsrResponse>;
 }
 
 export async function submitRequest(payload: SubmitRequestBody): Promise<SubmitRequestResponse> {
@@ -134,7 +139,8 @@ export type DashboardResponse = {
 };
 
 export async function fetchDashboardRequests(signal?: AbortSignal): Promise<ProviderRequest[]> {
-  const response = await fetch("/api/requests/dashboard", { method: "GET", signal, cache: "no-store" });
+  const headers = await providerAuthorizationHeaders();
+  const response = await fetch("/api/requests/dashboard", { method: "GET", headers, signal, cache: "no-store" });
   if (!response.ok) {
     throw new Error(await readError(response));
   }
@@ -147,10 +153,28 @@ export async function fetchDashboardRequests(signal?: AbortSignal): Promise<Prov
   return payload.requests;
 }
 
-export async function updateRequestStatus(id: string, status: string): Promise<ProviderRequest> {
+export async function confirmDraftRequest(id: string, draftToken: string): Promise<ProviderRequest> {
   const response = await fetch(`/api/requests/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Draft-Token": draftToken },
+    body: JSON.stringify({ status: "pending" }),
+  });
+  if (!response.ok) throw await apiError(response);
+  const payload = (await response.json()) as { success: true; request: ProviderRequest };
+  return payload.request;
+}
+export async function discardDraftRequest(id: string, draftToken: string): Promise<void> {
+  const response = await fetch("/api/requests/" + id, {
+    method: "DELETE",
+    headers: { "X-Draft-Token": draftToken },
+  });
+  if (!response.ok) throw await apiError(response);
+}
+export async function updateRequestStatus(id: string, status: string): Promise<ProviderRequest> {
+  const authorization = await providerAuthorizationHeaders();
+  const response = await fetch(`/api/requests/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authorization },
     body: JSON.stringify({ status }),
   });
 

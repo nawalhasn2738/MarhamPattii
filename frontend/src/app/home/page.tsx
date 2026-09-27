@@ -34,12 +34,12 @@ export default function HomePage() {
     router.push("/record");
   }
 
-  async function useDemoAudio() {
+  async function loadDemoAudio() {
     if (loadingDemo) return;
     setLoadingDemo(true);
     setDemoError(null);
     try {
-      const response = await fetch("/api/demo-audio", { cache: "no-store" });
+      const response = await fetch("/audio/test2.wav", { cache: "force-cache" });
       if (!response.ok) throw new Error("Demo audio could not be loaded.");
       const blob = await response.blob();
       flushSync(() => {
@@ -57,21 +57,25 @@ export default function HomePage() {
   return (
     <RoleGuard role="patient">
       <PatientShell>
-      <h1 className="screen-title">{text.howHelp}</h1>
-      <p className="screen-copy">{text.tapMic}</p>
-      <MicButton label={text.tapToSpeak} onClick={() => openRecorder("mic")} />
-      <p className="speak-label">{text.speakInBalti}</p>
-      {demoError ? (
-        <p className="alert" role="alert">
-          {demoError}
-        </p>
-      ) : null}
-      <div className="actions">
-        <QuickAction label={text.requestDoctor} onClick={() => openRecorder("doctor")} />
-        <QuickAction label={text.findFacility} onClick={() => openRecorder("facility")} />
-        <QuickAction label={loadingDemo ? "Loading demo audio..." : "Use Demo Audio"} onClick={() => void useDemoAudio()} disabled={loadingDemo} />
-        <QuickAction label={text.myRequests} onClick={() => router.push("/requests")} />
-      </div>
+        <h1 className="screen-title">{text.howHelp}</h1>
+        <p className="screen-copy">{text.tapMic}</p>
+        <MicButton label={text.tapToSpeak} onClick={() => openRecorder("mic")} />
+        <p className="speak-label">{text.speakInBalti}</p>
+        {demoError ? (
+          <p className="alert" role="alert">
+            {demoError}
+          </p>
+        ) : null}
+        <div className="actions">
+          <QuickAction label={text.requestDoctor} onClick={() => openRecorder("doctor")} />
+          <QuickAction label={text.findFacility} onClick={() => openRecorder("facility")} />
+          <QuickAction
+            label={loadingDemo ? "Loading demo audio..." : "Use Demo Audio"}
+            onClick={() => void loadDemoAudio()}
+            disabled={loadingDemo}
+          />
+          <QuickAction label={text.myRequests} onClick={() => router.push("/requests")} />
+        </div>
       </PatientShell>
     </RoleGuard>
   );

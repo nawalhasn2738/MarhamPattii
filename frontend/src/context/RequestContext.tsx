@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import type { TranscribeResponse } from "@/lib/api";
+import type { IntentResponse, UnderstandingResponse } from "@/lib/aiTypes";
 import { getCopy } from "@/lib/copy";
 import type { LanguageCode } from "@/lib/languages";
 import {
@@ -23,7 +23,7 @@ export type { EntryKind };
 
 export type IntentResult = {
   intent: string;
-  urgency: string;
+  urgency: IntentResponse["urgency"];
   requires_human: boolean;
 };
 
@@ -45,6 +45,7 @@ export type RequestState = {
   requestLabel?: string;
   durationLabel?: string;
   requestId?: string;
+  draftToken?: string;
   status?: string;
   sentAt?: string;
   audioKey?: string;
@@ -60,7 +61,8 @@ type RequestContextValue = {
   beginRequest: (entry: EntryKind) => void;
   clearDraft: () => void;
   setAudio: (blob: Blob, durationSeconds: number) => void;
-  applyUnderstanding: (result: TranscribeResponse) => void;
+  applyUnderstanding: (result: UnderstandingResponse) => void;
+  markDraft: (response: { id: string; status: string; draftToken: string }) => void;
   markSent: (response: { id: string; status: string }) => void;
 };
 
@@ -86,6 +88,7 @@ function clearedDraft(state: RequestState, audioUrl?: string): RequestState {
     requestLabel: undefined,
     durationLabel: undefined,
     requestId: undefined,
+    draftToken: undefined,
     status: undefined,
     sentAt: undefined,
     audioKey: undefined,
@@ -115,7 +118,7 @@ function stateFromVisit(visit: StoredVisit): RequestState {
     intent: visit.intent
       ? {
           intent: visit.intent,
-          urgency: visit.urgency ?? "unknown",
+          urgency: visit.urgency === "routine" || visit.urgency === "urgent" ? visit.urgency : "unknown",
           requires_human: visit.requiresHuman ?? true,
         }
       : undefined,
@@ -126,6 +129,7 @@ function stateFromVisit(visit: StoredVisit): RequestState {
     requestLabel: visit.requestLabel,
     durationLabel: visit.durationLabel,
     requestId: visit.requestId,
+    draftToken: visit.draftToken,
     status: visit.status,
     sentAt: visit.sentAt,
     requests: visit.requests ?? [],
@@ -230,6 +234,7 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
         requestLabel: state.requestLabel,
         durationLabel: state.durationLabel,
         requestId: state.requestId,
+        draftToken: state.draftToken,
         status: state.status,
         sentAt: state.sentAt,
         requests,
@@ -279,13 +284,13 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
     [releaseAudio],
   );
 
-  const applyUnderstanding = useCallback((result: TranscribeResponse) => {
+  const applyUnderstanding = useCallback((result: UnderstandingResponse) => {
     setState((current) => {
       const copy = describeUnderstanding(result, current.entry, current.language);
       return {
         ...current,
         transcript: result.transcript,
-        confidence: result.confidence,
+        confidence: result.confidence ?? undefined,
         intent: {
           intent: result.intent,
           urgency: result.urgency,
@@ -300,6 +305,15 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const markDraft = useCallback((response: { id: string; status: string; draftToken: string }) => {
+    setState((current) => ({
+      ...current,
+      requestId: response.id,
+      draftToken: response.draftToken,
+      status: response.status,
+      sentAt: undefined,
+    }));
+  }, []);
   const markSent = useCallback((response: { id: string; status: string }) => {
     const sentAt = new Date().toISOString();
     setState((current) => {
@@ -335,6 +349,7 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
         ...current,
         requestId: response.id,
         status: item.status,
+        draftToken: undefined,
         sentAt,
         requests: [item, ...current.requests.filter((request) => request.id !== item.id)],
       };
@@ -352,9 +367,10 @@ export function RequestProvider({ children }: { children: React.ReactNode }) {
       clearDraft,
       setAudio,
       applyUnderstanding,
+      markDraft,
       markSent,
     }),
-    [state, hydrated, setLanguage, setRole, logout, beginRequest, clearDraft, setAudio, applyUnderstanding, markSent],
+    [state, hydrated, setLanguage, setRole, logout, beginRequest, clearDraft, setAudio, applyUnderstanding, markDraft, markSent],
   );
 
   return <RequestContext.Provider value={value}>{children}</RequestContext.Provider>;

@@ -1,0 +1,8 @@
+{
+  "dataset": "mohdali1/baltivoice-asr",
+  "split": "validation",
+  "index": 0,
+  "source_file": "common_voice_bft_41845981.wav",
+  "sentence": "کھڑق فوسے سمنگرو زونے ہرژیکسے لدانے یودپو فری",
+  "local_file": "ai-service/audio/test2.wav"
+}

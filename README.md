@@ -44,7 +44,7 @@ The frontend teammate's UI branch, `frontend-fizza`, has been successfully merge
 Verified and integrated:
 
 - Backend AI/ASR pipeline: local Python wrapper, Balti Whisper ASR, and Groq structured intent extraction are wired through `POST /api/requests`.
-- Supabase wiring: audio uploads to the public `audio-recordings` bucket and request rows are inserted into the `requests` table.
+- Supabase wiring: audio uploads to the private `audio-recordings` bucket and request rows are inserted into the `requests` table.
 - Patient frontend: recording flow, processing state, confirmation screen, `Speak Again`, final sent state, and `Use Demo Audio` fallback are integrated.
 - Provider dashboard: live request fetching, request cards, detail page, Supabase `audio_url` playback, and status updates are integrated.
 - QA safeguards: `test-e2e-audio.js`, `/api/demo-audio`, `.env.example`, and Vercel deployment notes are present.
@@ -60,15 +60,15 @@ Active phases:
 ```text
 MarhamPattii/
 +- frontend/                  # Next.js App Router frontend/backend API
-¦  +- src/app/api/requests/   # Patient request API routes
-¦  +- package.json            # Next.js, React, Supabase, Groq dependencies
+Â¦  +- src/app/api/requests/   # Patient request API routes
+Â¦  +- package.json            # Next.js, React, Supabase, Groq dependencies
 +- ai-service/                # Python ASR integration layer
-¦  +- src/test_pipeline.py    # ASR + Groq pipeline logic
-¦  +- src/run_pipeline_json.py# JSON-only wrapper called by Node.js
-¦  +- src/download_balti_model.py
-¦  +- audio/test2.wav         # Sample audio used by smoke tests
+Â¦  +- src/test_pipeline.py    # ASR + Groq pipeline logic
+Â¦  +- src/run_pipeline_json.py# JSON-only wrapper called by Node.js
+Â¦  +- src/download_balti_model.py
+Â¦  +- audio/test2.wav         # Sample audio used by smoke tests
 +- database/
-¦  +- supabase_policies.sql   # Supabase table/storage RLS helper policies
+Â¦  +- supabase_policies.sql   # Supabase table/storage RLS helper policies
 +- INTEGRATION.md             # Backend/Python integration notes
 +- test-e2e-audio.js          # End-to-end local smoke test
 +- README.md
@@ -114,7 +114,7 @@ If local uploads fail with a row-level security error, run the helper SQL in:
 database/supabase_policies.sql
 ```
 
-That file contains policies for request inserts/reads/updates and storage uploads/reads for the public `audio-recordings` bucket.
+That file contains production RLS policies, provider-role access, and a private `audio-recordings` bucket served through short-lived signed URLs.
 
 ## Environment variables
 

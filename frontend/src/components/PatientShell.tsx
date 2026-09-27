@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useRequest } from "@/context/RequestContext";
 import { getCopy } from "@/lib/copy";
 import { languageName } from "@/lib/languages";
+import { signOutProvider } from "@/lib/supabaseBrowser";
 
 export function PatientShell({
   children,
@@ -21,7 +22,10 @@ export function PatientShell({
   const urdu = state.language === "ur";
   const showSwitchRole = pathname !== "/" && Boolean(state.role);
 
-  function switchRole() {
+  async function switchRole() {
+    if (state.role === "provider") {
+      await signOutProvider().catch(() => undefined);
+    }
     logout();
     router.replace("/");
   }
@@ -34,7 +38,7 @@ export function PatientShell({
           <span className="topbar-actions">
             {state.role ? <span className="role-chip">{state.role}</span> : null}
             {showSwitchRole ? (
-              <button type="button" className="topbar-link" onClick={switchRole}>
+              <button type="button" className="topbar-link" onClick={() => void switchRole()}>
                 Switch Role
               </button>
             ) : showLanguage ? (

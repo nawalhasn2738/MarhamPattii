@@ -22,7 +22,8 @@ const audioPath = resolve(
   process.cwd(),
   process.env.TEST_AUDIO_PATH ?? "ai-service/audio/test2.wav",
 );
-const requestTimeoutMs = Number(process.env.E2E_TIMEOUT_MS ?? 1000 * 60 * 20);
+// The server aborts at 55s; allow 5s for the JSON error to reach the client.
+const requestTimeoutMs = Number(process.env.E2E_TIMEOUT_MS ?? 60_000);
 
 function assert(condition, message) {
   if (!condition) {
@@ -157,7 +158,7 @@ async function main() {
     response = await postMultipart(endpoint, multipartBody, boundary);
   } catch (error) {
     throw new Error(
-      `Could not complete request to ${endpoint}. Start the frontend with "cd frontend; npm run dev:3001" first.`,
+      `Could not complete request to ${endpoint}. Start the frontend with "cd frontend; npm run dev" first.`,
       { cause: error },
     );
   }

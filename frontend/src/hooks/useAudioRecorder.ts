@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { validateAudioBlob } from "@/lib/audio";
 
 const MAX_SECONDS = 60;
 
@@ -13,6 +14,7 @@ export type RecorderPhase =
   | "unsupported"
   | "too-short"
   | "silent"
+  | "invalid-audio"
   | "error";
 
 function pickMimeType() {
@@ -156,7 +158,12 @@ export function useAudioRecorder(onComplete: (blob: Blob, durationSeconds: numbe
         const silent = measuredRef.current && loudFramesRef.current === 0;
         releaseStream();
         if (!stoppedByUserRef.current || !aliveRef.current) return;
-        if (elapsedMs < 1000 || blob.size < 400) {
+        const validation = validateAudioBlob(blob);
+        if (!validation.ok) {
+          setPhase(validation.code === "audio_too_small" ? "too-short" : "invalid-audio");
+          return;
+        }
+        if (elapsedMs < 1000) {
           setPhase("too-short");
           return;
         }
