@@ -4,7 +4,11 @@ import {
   MIN_AUDIO_BYTES,
   validateAudioBlob,
 } from "@/lib/audio";
-import { TranscriptionError, transcribeAudioBuffer } from "@/lib/server/transcribe";
+import {
+  TranscriptionError,
+  transcriptionErrorPayload,
+  transcribeAudioBuffer,
+} from "@/lib/server/transcribe";
 
 // `mohdali1/whisper-small-balti` has roughly 25-30% WER on read speech and
 // may perform worse on spontaneous patient audio. Always show its transcript
@@ -100,10 +104,12 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json(await transcribeAudioBuffer(buffer));
+    return NextResponse.json(
+      await transcribeAudioBuffer(buffer, { mimeType: validation.mimeType }),
+    );
   } catch (error) {
     if (error instanceof TranscriptionError) {
-      return jsonError(error.message, error.code, error.status);
+      return NextResponse.json(transcriptionErrorPayload(error), { status: error.status });
     }
     console.error("HF transcription failed:", error);
     return jsonError("Could not transcribe audio. Please try again.", "transcription_failed", 500);

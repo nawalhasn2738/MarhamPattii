@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { PatientShell } from "@/components/PatientShell";
 import { useRequest } from "@/context/RequestContext";
@@ -52,14 +53,21 @@ export default function RoleSelectionPage() {
     router.push("/home");
   }
 
+  function closeProviderLogin() {
+    if (checkingProvider) return;
+    setAuthError("");
+    setPassword("");
+    setShowProviderLogin(false);
+  }
+
   async function openProviderPortal() {
     setCheckingProvider(true);
     setAuthError("");
     try {
       const session = await currentProviderSession();
       if (session) {
-        setRole("provider");
-        router.push("/requests");
+        flushSync(() => setRole("provider"));
+        router.replace("/requests");
         return;
       }
       setShowProviderLogin(true);
@@ -77,8 +85,8 @@ export default function RoleSelectionPage() {
     setAuthError("");
     try {
       await signInProvider(email.trim(), password);
-      setRole("provider");
-      router.push("/requests");
+      flushSync(() => setRole("provider"));
+      router.replace("/requests");
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Provider sign-in failed.");
     } finally {
@@ -88,69 +96,90 @@ export default function RoleSelectionPage() {
 
   return (
     <PatientShell showLanguage={false}>
-      <section className="welcome-hero">
-        <span className="brand-pill">MarhamPattii</span>
-        <h1 className="screen-title center">Choose your portal</h1>
-        <p className="screen-copy center">
-          A voice-first Balti healthcare bridge for patients and providers.
-        </p>
-      </section>
-
-      <div className="role-grid" aria-label="Choose your role">
-        <RoleCard
-          primary
-          eyebrow="For patients"
-          title="Patient Portal"
-          body="Record a Balti voice request and review what the system understood."
-          action="Start voice request"
-          onClick={enterPatientPortal}
-          disabled={checkingProvider}
-        />
-        <RoleCard
-          eyebrow="For providers"
-          title="Provider Dashboard"
-          body="Sign in to review requests, play original audio, and update request status."
-          action={checkingProvider ? "Checking session..." : "Provider sign in"}
-          onClick={() => void openProviderPortal()}
-          disabled={checkingProvider}
-        />
-      </div>
-
       {showProviderLogin ? (
-        <form className="provider-login" onSubmit={(event) => void submitProviderLogin(event)}>
-          <h2>Provider sign in</h2>
-          <label>
-            Email
-            <input
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              disabled={checkingProvider}
-            />
-          </label>
-          <label>
-            Password
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              disabled={checkingProvider}
-            />
-          </label>
-          {authError ? <p className="alert" role="alert">{authError}</p> : null}
-          <button className="primary-button" type="submit" disabled={checkingProvider}>
-            {checkingProvider ? "Signing in..." : "Sign in securely"}
-          </button>
-        </form>
-      ) : null}
+        <section className="provider-login-view" aria-labelledby="provider-login-title">
+          <div className="welcome-hero provider-login-hero">
+            <span className="brand-pill">MarhamPattii Provider</span>
+            <h1 id="provider-login-title" className="screen-title center">Welcome back</h1>
+            <p className="screen-copy center">
+              Sign in securely to review incoming healthcare requests.
+            </p>
+          </div>
 
-      <p className="note">
-        Provider access requires a Supabase account with the server-controlled provider role.
-      </p>
+          <form className="provider-login" onSubmit={(event) => void submitProviderLogin(event)}>
+            <label>
+              Email
+              <input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                autoFocus
+                disabled={checkingProvider}
+              />
+            </label>
+            <label>
+              Password
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                minLength={6}
+                disabled={checkingProvider}
+              />
+            </label>
+            {authError ? <p className="alert" role="alert">{authError}</p> : null}
+            <button className="primary-button" type="submit" disabled={checkingProvider}>
+              {checkingProvider ? "Signing in..." : "Sign in securely"}
+            </button>
+            <button
+              className="provider-login-back"
+              type="button"
+              onClick={closeProviderLogin}
+              disabled={checkingProvider}
+            >
+              Back to portal choices
+            </button>
+          </form>
+        </section>
+      ) : (
+        <>
+          <section className="welcome-hero">
+            <span className="brand-pill">MarhamPattii</span>
+            <h1 className="screen-title center">Choose your portal</h1>
+            <p className="screen-copy center">
+              A voice-first Balti healthcare bridge for patients and providers.
+            </p>
+          </section>
+
+          <div className="role-grid" aria-label="Choose your role">
+            <RoleCard
+              primary
+              eyebrow="For patients"
+              title="Patient Portal"
+              body="Record a Balti voice request and review what the system understood."
+              action="Start voice request"
+              onClick={enterPatientPortal}
+              disabled={checkingProvider}
+            />
+            <RoleCard
+              eyebrow="For providers"
+              title="Provider Dashboard"
+              body="Sign in to review requests, play original audio, and update request status."
+              action={checkingProvider ? "Checking session..." : "Provider sign in"}
+              onClick={() => void openProviderPortal()}
+              disabled={checkingProvider}
+            />
+          </div>
+
+          <p className="note">
+            Provider access requires a Supabase account with the server-controlled provider role.
+          </p>
+        </>
+      )}
     </PatientShell>
   );
 }

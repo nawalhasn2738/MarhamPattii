@@ -2,16 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { ActionButton } from "@/components/ActionButton";
 import { PatientShell } from "@/components/PatientShell";
 import { ProcessingSteps, type ProcessingStep } from "@/components/ProcessingSteps";
 import { RoleGuard } from "@/components/RoleGuard";
 import { useRecorder } from "@/context/RecorderContext";
 import { useRequest } from "@/context/RequestContext";
-import { ApiClientError, discardDraftRequest, submitRecordedRequest } from "@/lib/api";
+import { ApiClientError, createDemoRequest, discardDraftRequest, submitRecordedRequest } from "@/lib/api";
 import type { IntentResponse } from "@/lib/aiTypes";
 import { getCopy } from "@/lib/copy";
 import { languageName } from "@/lib/languages";
+import { currentProviderSession } from "@/lib/supabaseBrowser";
 
 const LOW_CONFIDENCE_THRESHOLD = 0.55;
 
@@ -21,8 +23,61 @@ type ProcessingFailure = {
   title: string;
   message: string;
   canRetry: boolean;
+  offerDemo: boolean;
+  failedStep: "audio" | "transcription" | "intent";
 };
 
+function failureFor(error: unknown): ProcessingFailure {
+  const code = error instanceof ApiClientError ? error.code : "request_failed";
+
+  if (["audio_empty", "audio_too_small", "audio_type_invalid", "empty_transcript", "low_confidence"].includes(code)) {
+    return {
+      title: "Recording was too short or silent",
+      message: "Recording was too short or silent. Please try again and speak for at least a few seconds.",
+      canRetry: false,
+      offerDemo: true,
+      failedStep: "audio",
+    };
+  }
+
+  if (["hf_rate_limited", "hf_model_loading"].includes(code)) {
+    return {
+      title: "Transcription service is busy",
+      message: "The transcription service is temporarily busy. Try again, or use Demo Audio for a reliable fallback.",
+      canRetry: true,
+      offerDemo: true,
+      failedStep: "transcription",
+    };
+  }
+
+  if (["hf_timeout", "request_timeout", "hf_auth_failed", "hf_transcription_failed", "invalid_asr_response"].includes(code)) {
+    return {
+      title: "Transcription failed",
+      message: "Transcription failed. Please try again or use the Demo Audio fallback.",
+      canRetry: true,
+      offerDemo: true,
+      failedStep: "transcription",
+    };
+  }
+
+  if (["groq_timeout", "intent_service_failed", "empty_intent_response", "invalid_intent_response"].includes(code)) {
+    return {
+      title: "We could not prepare the request",
+      message: "The recording was received, but the request summary could not be prepared. Try again or use Demo Audio.",
+      canRetry: true,
+      offerDemo: true,
+      failedStep: "intent",
+    };
+  }
+
+  return {
+    title: "We could not reach the transcription service",
+    message: "We could not reach the transcription service. Please check your connection and try again.",
+    canRetry: true,
+    offerDemo: true,
+    failedStep: "transcription",
+  };
+}
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError"
     || error instanceof Error && error.name === "AbortError";
@@ -30,22 +85,24 @@ function isAbortError(error: unknown): boolean {
 
 export default function ProcessingPage() {
   const router = useRouter();
-  const { state, hydrated, applyUnderstanding, markDraft, beginRequest } = useRequest();
+  const { state, hydrated, applyUnderstanding, markDraft, beginRequest, setRole } = useRequest();
   const { start } = useRecorder();
   const text = getCopy(state.language);
   const [attempt, setAttempt] = useState(0);
   const [phase, setPhase] = useState<ProcessingPhase>("processing");
   const [failure, setFailure] = useState<ProcessingFailure | null>(null);
+  const [loadingDemo, setLoadingDemo] = useState(false);
 
   const steps = useMemo<ProcessingStep[]>(() => {
     if (phase === "success") {
       return [text.stepSaved, text.stepListening, text.stepPreparing].map((label) => ({ label, status: "success" }));
     }
     if (phase === "error") {
+      const intentFailed = failure?.failedStep === "intent";
       return [
         { label: text.stepSaved, status: "success" },
-        { label: text.stepListening, status: "error" },
-        { label: text.stepPreparing, status: "pending" },
+        { label: text.stepListening, status: intentFailed ? "success" : "error" },
+        { label: text.stepPreparing, status: intentFailed ? "error" : "pending" },
       ];
     }
     return [
@@ -53,7 +110,7 @@ export default function ProcessingPage() {
       { label: text.stepListening, status: "active" },
       { label: text.stepPreparing, status: "pending" },
     ];
-  }, [phase, text.stepListening, text.stepPreparing, text.stepSaved]);
+  }, [failure?.failedStep, phase, text.stepListening, text.stepPreparing, text.stepSaved]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -120,19 +177,7 @@ export default function ProcessingPage() {
       } catch (error) {
         if (cancelled || isAbortError(error)) return;
         if (draftId && draftToken) await discardDraftRequest(draftId, draftToken).catch(() => undefined);
-        const code = error instanceof ApiClientError ? error.code : "request_failed";
-        const shouldRecordAgain = [
-          "audio_empty", "audio_too_small", "audio_type_invalid", "empty_transcript",
-          "low_confidence", "hf_transcription_failed",
-        ].includes(code);
-
-        setFailure({
-          title: shouldRecordAgain ? "We couldn't hear that clearly" : "We couldn't process your request",
-          message: shouldRecordAgain
-            ? "Please tap below and record your request again. Speak naturally and keep the phone close."
-            : "Your recording is safe. Please try processing it again in a moment.",
-          canRetry: !shouldRecordAgain,
-        });
+        setFailure(failureFor(error));
         setPhase("error");
       }
     }
@@ -144,6 +189,30 @@ export default function ProcessingPage() {
     };
   }, [applyUnderstanding, attempt, hydrated, markDraft, router, state.audioBlob, state.language]);
 
+  async function runDemoFallback() {
+    if (loadingDemo) return;
+    setLoadingDemo(true);
+    try {
+      await createDemoRequest();
+      const providerSession = await currentProviderSession();
+      if (providerSession) {
+        flushSync(() => setRole("provider"));
+        router.replace("/requests");
+        return;
+      }
+      router.replace("/?next=/requests&demo=created");
+    } catch (error) {
+      setFailure({
+        title: "Demo fallback could not be created",
+        message: error instanceof Error ? error.message : "Please try the demo fallback again.",
+        canRetry: true,
+        offerDemo: true,
+        failedStep: "transcription",
+      });
+    } finally {
+      setLoadingDemo(false);
+    }
+  }
   async function recordAgain() {
     beginRequest(state.entry ?? "mic");
     router.push("/record");
@@ -181,6 +250,15 @@ export default function ProcessingPage() {
                   }}
                 >
                   {text.tryAgain}
+                </ActionButton>
+              ) : null}
+              {failure?.offerDemo ? (
+                <ActionButton
+                  variant="ghost"
+                  onClick={() => void runDemoFallback()}
+                  disabled={loadingDemo}
+                >
+                  {loadingDemo ? "Creating demo request..." : "Use Demo Audio"}
                 </ActionButton>
               ) : null}
             </>

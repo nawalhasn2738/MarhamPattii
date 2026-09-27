@@ -971,3 +971,170 @@ a.summary {
   cursor: wait;
   opacity: 0.65;
 }
+.provider-login-view {
+  display: grid;
+  align-content: center;
+  min-height: calc(100dvh - 92px);
+  padding: 12px 0 24px;
+  animation: provider-login-enter 180ms ease-out both;
+}
+
+.provider-login-hero {
+  margin: 0 0 14px;
+}
+
+.provider-login-view .provider-login {
+  margin-top: 0;
+  box-shadow: 0 18px 45px rgba(15, 61, 62, 0.1);
+}
+
+.provider-login-back {
+  border: 0;
+  background: transparent;
+  color: #0f3d3e;
+  padding: 0.55rem;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.provider-login-back:hover,
+.provider-login-back:focus-visible {
+  color: #b85650;
+}
+
+@keyframes provider-login-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .provider-login-view {
+    animation: none;
+  }
+}
+.demo-fallback-card {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(190, 76, 67, 0.3);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 183, 119, 0.42), transparent 42%),
+    linear-gradient(135deg, #fff0ed 0%, #fff7e8 100%);
+  box-shadow: 0 10px 28px rgba(190, 76, 67, 0.13);
+}
+
+.demo-fallback-card::after {
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  right: -48px;
+  bottom: -62px;
+  border-radius: 50%;
+  background: rgba(242, 163, 58, 0.13);
+  content: "";
+  pointer-events: none;
+}
+
+.demo-fallback-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.demo-fallback-kicker {
+  display: inline-flex;
+  margin-bottom: 5px;
+  color: #a63d36;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.demo-fallback-copy h2 {
+  margin: 0;
+  color: #6f2925;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.demo-fallback-copy p {
+  margin: 6px 0 0;
+  color: #71413d;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.demo-fallback-button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #bd4d45, #d86f5e);
+  box-shadow: 0 8px 20px rgba(190, 76, 67, 0.27);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+}
+
+.demo-fallback-button:hover:not(:disabled),
+.demo-fallback-button:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 11px 25px rgba(190, 76, 67, 0.34);
+  filter: saturate(1.08);
+}
+
+.demo-fallback-button:focus-visible {
+  outline: 3px solid rgba(216, 111, 94, 0.28);
+  outline-offset: 3px;
+}
+
+.demo-fallback-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.demo-fallback-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.demo-fallback-icon {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.demo-fallback-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-fallback-button {
+    transition: none;
+  }
+}

@@ -42,7 +42,11 @@ export default function RecordPage() {
     denied: { title: text.micNeeded, body: text.tapAllow, action: text.useMic },
     unavailable: { title: text.noMic, body: text.connectMic, action: text.tryAgain },
     unsupported: { title: text.recordingUnavailable, body: text.openBrowser, action: text.tryAgain },
-    "too-short": { title: text.tooShort, body: text.speakLonger, action: text.recordAgain },
+    "too-short": {
+      title: text.tooShort,
+      body: "Please record for at least a few seconds.",
+      action: text.recordAgain,
+    },
     silent: { title: text.silentTitle, body: text.silentBody, action: text.recordAgain },
     "invalid-audio": {
       title: text.micFailed,

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { requiredServerEnv } from "@/lib/server/config";
+import { requiredServerSecret } from "@/lib/server/config";
 
 const DRAFT_TOKEN_TTL_SECONDS = 2 * 60 * 60;
 
@@ -13,11 +13,7 @@ export class DraftAuthorizationError extends Error {
 }
 
 function signingSecret(): string {
-  const secret = requiredServerEnv("DRAFT_CONFIRMATION_SECRET");
-  if (secret.length < 32) {
-    throw new Error("DRAFT_CONFIRMATION_SECRET must contain at least 32 characters.");
-  }
-  return secret;
+  return requiredServerSecret("DRAFT_CONFIRMATION_SECRET");
 }
 
 function signature(payload: string): string {

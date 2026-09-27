@@ -100,6 +100,36 @@ export async function submitRecordedRequest(
   return payload;
 }
 
+export async function createDemoRequest(): Promise<{ id: string; status: string }> {
+  const audioResponse = await fetch("/audio/test2.wav", { cache: "force-cache" });
+  if (!audioResponse.ok) {
+    throw new ApiClientError("Demo audio could not be loaded.", "demo_audio_missing", audioResponse.status);
+  }
+
+  const audio = await audioResponse.blob();
+  const body = new FormData();
+  body.append("audio", new File([audio], "test2.wav", { type: "audio/wav" }));
+
+  const response = await fetch("/api/demo-request", { method: "POST", body });
+  if (!response.ok) throw await apiError(response);
+
+  const payload = (await response.json()) as {
+    success?: boolean;
+    request?: { id?: string; status?: string };
+    error?: string;
+  };
+  if (!payload.success || !payload.request?.id) {
+    throw new ApiClientError(
+      payload.error ?? "Demo request could not be created.",
+      "demo_failed",
+      500,
+    );
+  }
+  return {
+    id: payload.request.id,
+    status: payload.request.status ?? "pending",
+  };
+}
 export async function transcribeAudio(audio: Blob, signal?: AbortSignal): Promise<AsrResponse> {
   const body = new FormData();
   body.append("audio", audio, audioFileName(audio));

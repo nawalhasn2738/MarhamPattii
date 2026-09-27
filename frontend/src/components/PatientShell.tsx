@@ -20,7 +20,10 @@ export function PatientShell({
   const text = getCopy(state.language);
   const label = languageName(state.language);
   const urdu = state.language === "ur";
-  const showSwitchRole = pathname !== "/" && Boolean(state.role);
+  // The root route is a neutral chooser. Ignore any previously persisted role
+  // until a guarded patient/provider page has been entered successfully.
+  const activeRole = pathname === "/" ? undefined : state.role;
+  const showSwitchRole = Boolean(activeRole);
 
   async function switchRole() {
     if (state.role === "provider") {
@@ -34,9 +37,9 @@ export function PatientShell({
     <div className="stage">
       <div className={urdu ? "patient-phone urdu-ui" : "patient-phone"} dir={urdu ? "rtl" : "ltr"} lang={urdu ? "ur" : "en"}>
         <header className="topbar">
-          <Link href={state.role === "provider" ? "/requests" : state.role === "patient" ? "/home" : "/"}>MarhamPattii</Link>
+          <Link href={activeRole === "provider" ? "/requests" : activeRole === "patient" ? "/home" : "/"}>MarhamPattii</Link>
           <span className="topbar-actions">
-            {state.role ? <span className="role-chip">{state.role}</span> : null}
+            {activeRole ? <span className="role-chip">{activeRole}</span> : null}
             {showSwitchRole ? (
               <button type="button" className="topbar-link" onClick={() => void switchRole()}>
                 Switch Role

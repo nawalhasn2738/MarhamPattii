@@ -2,12 +2,18 @@ import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 import type { IntentResponse } from "@/lib/aiTypes";
 import { validateAudioBlob } from "@/lib/audio";
-import { TranscriptionError, transcribeAudioBuffer } from "@/lib/server/transcribe";
+import {
+  TranscriptionError,
+  transcriptionErrorPayload,
+  transcribeAudioBuffer,
+} from "@/lib/server/transcribe";
 import {
   GROQ_TIMEOUT_MS,
   REQUEST_DEADLINE_MS,
   ServerConfigurationError,
+  requireServerEnvList,
   requiredServerEnv,
+  requiredServerSecret,
 } from "@/lib/server/config";
 import { createServiceSupabaseClient } from "@/lib/server/providerAuth";
 import { createDraftToken } from "@/lib/server/draftAuth";
@@ -17,6 +23,13 @@ export const maxDuration = 60;
 
 const AUDIO_BUCKET = "audio-recordings";
 const GROQ_MODEL_ID = process.env.GROQ_MODEL_ID ?? "openai/gpt-oss-20b";
+const REQUEST_REQUIRED_ENV = [
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "GROQ_API_KEY",
+  "HF_API_TOKEN",
+  "DRAFT_CONFIRMATION_SECRET",
+] as const;
 
 class ApiError extends Error {
   constructor(message: string, readonly code: string, readonly status: number) {
@@ -107,8 +120,10 @@ export async function POST(request: Request) {
   const deadline = setTimeout(() => deadlineController.abort(), REQUEST_DEADLINE_MS);
 
   try {
-    // Fail before AI or database work if secure draft capabilities cannot be issued.
-    requiredServerEnv("DRAFT_CONFIRMATION_SECRET");
+    // Fail before parsing/uploading audio so configuration errors identify
+    // the exact missing key without consuming HF or Groq time.
+    requireServerEnvList(REQUEST_REQUIRED_ENV);
+    requiredServerSecret("DRAFT_CONFIRMATION_SECRET");
 
     let formData: FormData;
     try {
@@ -140,7 +155,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "The audio file is empty.", code: "audio_empty" }, { status: 400 });
     }
 
-    const { transcript, confidence } = await transcribeAudioBuffer(audioBuffer, { signal: deadlineController.signal });
+    const { transcript, confidence } = await transcribeAudioBuffer(audioBuffer, {
+      signal: deadlineController.signal,
+      mimeType: audioValidation.mimeType,
+    });
     const intent = await extractIntent(transcript, deadlineController.signal);
     if (deadlineController.signal.aborted) {
       throw new ApiError("Request processing took too long. Please try again.", "request_timeout", 504);
@@ -189,13 +207,20 @@ export async function POST(request: Request) {
     if (error instanceof ServerConfigurationError) {
       console.error(error.message);
       return NextResponse.json(
-        { success: false, error: "The request service is not configured.", code: "service_not_configured" },
+        {
+          success: false,
+          error: process.env.NODE_ENV === "production"
+            ? "The request service is not configured."
+            : `The request service is missing ${error.variable}. Add it to frontend/.env.local and restart Next.js.`,
+          code: "service_not_configured",
+          ...(process.env.NODE_ENV !== "production" ? { missing: error.variable } : {}),
+        },
         { status: 503 },
       );
     }
     if (error instanceof TranscriptionError) {
       return NextResponse.json(
-        { success: false, error: error.message, code: error.code },
+        transcriptionErrorPayload(error),
         { status: error.status },
       );
     }

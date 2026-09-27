@@ -17,3 +17,15 @@ export function requiredServerEnv(name: string): string {
   if (!value) throw new ServerConfigurationError(name);
   return value;
 }
+
+export function requireServerEnvList(names: readonly string[]): void {
+  for (const name of names) requiredServerEnv(name);
+}
+
+export function requiredServerSecret(name: string, minimumLength = 32): string {
+  const value = requiredServerEnv(name);
+  if (value.length < minimumLength) {
+    throw new ServerConfigurationError(`${name} (must contain at least ${minimumLength} characters)`);
+  }
+  return value;
+}
