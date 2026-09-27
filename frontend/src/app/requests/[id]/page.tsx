@@ -2,80 +2,142 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { ActionButton } from "@/components/ActionButton";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { PatientShell } from "@/components/PatientShell";
+import { RoleGuard } from "@/components/RoleGuard";
 import { SafetyNote } from "@/components/SafetyNote";
-import { useStoredBlob, urlForBlob } from "@/lib/audioStore";
-import { useRequest } from "@/context/RequestContext";
-import { getCopy } from "@/lib/copy";
+import { fetchDashboardRequests, updateRequestStatus, type ProviderRequest } from "@/lib/api";
 import { displaySentAt } from "@/lib/format";
-import { base64ToBlob } from "@/lib/session";
-import { presentRequest } from "@/lib/understand";
 
-const audioUrls = new Map<string, string>();
+function statusLabel(status: string | null) {
+  if (status === "accepted") return "Accepted";
+  if (status === "clarification_requested") return "Clarification requested";
+  if (status === "completed") return "Completed";
+  return "Pending";
+}
 
-function storedAudioUrl(base64: string, type: string) {
-  const cached = audioUrls.get(base64);
-  if (cached) return cached;
-  const url = URL.createObjectURL(base64ToBlob(base64, type));
-  audioUrls.set(base64, url);
-  return url;
+function urgencyClass(urgency: string | null) {
+  if (urgency === "high") return "badge danger";
+  if (urgency === "low") return "badge ok-badge";
+  return "badge";
 }
 
 export default function RequestDetailPage() {
   const params = useParams<{ id: string }>();
-  const { state, hydrated } = useRequest();
-  const text = getCopy(state.language);
-  const request = state.requests.find((item) => item.id === params.id);
-  const presented = request ? presentRequest(request, state.language) : undefined;
-  const backup = useStoredBlob(request?.audioBase64 ? undefined : request?.audioKey);
-  let audioUrl = request?.id === state.requestId ? state.audioUrl : undefined;
-  if (request?.audioBase64) {
-    try {
-      audioUrl = storedAudioUrl(request.audioBase64, request.audioType || "audio/webm");
-    } catch {
-      audioUrl = undefined;
+  const [request, setRequest] = useState<ProviderRequest | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function load() {
+      try {
+        setLoading(true);
+        setError(null);
+        const allRequests = await fetchDashboardRequests(controller.signal);
+        setRequest(allRequests.find((item) => item.id === params.id) ?? null);
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+        setError(caught instanceof Error ? caught.message : "Failed to load request.");
+      } finally {
+        setLoading(false);
+      }
     }
-  } else if (backup.blob) {
-    audioUrl = urlForBlob(backup.blob);
+
+    void load();
+    return () => controller.abort();
+  }, [params.id]);
+
+  const summary = useMemo(() => request?.transcript?.trim() || "No transcript saved for this request.", [request]);
+
+  async function setStatus(status: "accepted" | "clarification_requested" | "completed") {
+    if (!request) return;
+    try {
+      setUpdating(true);
+      setError(null);
+      setRequest(await updateRequestStatus(request.id, status));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Failed to update request.");
+    } finally {
+      setUpdating(false);
+    }
   }
 
   return (
-    <PatientShell>
-      {!hydrated ? null : !request ? (
+    <RoleGuard role="provider">
+      <PatientShell>
+      <h1 className="screen-title">Request Details</h1>
+
+      {loading ? <p className="screen-copy">Loading request...</p> : null}
+      {error ? (
+        <p className="alert" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      {!loading && !request ? (
+        <p className="screen-copy">This request could not be found.</p>
+      ) : null}
+
+      {request ? (
         <>
-          <h1 className="screen-title">{text.myRequests}</h1>
-          <p className="screen-copy">{text.requestMissing}</p>
-        </>
-      ) : (
-        <>
-          <h1 className="screen-title">{presented?.requestLabel}</h1>
-          <p className="screen-copy">{presented?.summary}</p>
+          <p className="screen-copy">Review the AI interpretation and listen to the original Balti voice recording.</p>
           <div className="summary" style={{ marginTop: 0 }}>
-            <div className="kv" style={{ borderTop: 0, paddingTop: 0 }}>
-              <span>{text.status}</span>
-              <span className="wait">{text.waiting}</span>
+            <div className="dash-card-head">
+              <span className="badge">{request.language || "Balti"}</span>
+              <span className={urgencyClass(request.urgency)}>{request.urgency || "unknown"}</span>
+              <span className="badge status-badge">{statusLabel(request.status)}</span>
+            </div>
+
+            <p className="lead">Intent</p>
+            <p className="big">{request.intent || "Unclear request"}</p>
+
+            <div className="kv">
+              <span>Provider summary</span>
+              <span>{summary}</span>
             </div>
             <div className="kv">
-              <span>{text.sent}</span>
-              <span>{displaySentAt(request.sentAt, state.language)}</span>
+              <span>Transcript</span>
+              <span>{request.transcript || "Not available"}</span>
             </div>
-            {presented?.durationLabel ? (
-              <div className="kv">
-                <span>{text.howLong}</span>
-                <span>{presented.durationLabel}</span>
-              </div>
-            ) : null}
-            {audioUrl ? <AudioPlayer src={audioUrl} fallbackDuration={request.durationSeconds ?? 0} /> : null}
+            <div className="kv">
+              <span>AI confidence</span>
+              <span>Not stored</span>
+            </div>
+            <div className="kv">
+              <span>Received</span>
+              <span>{request.created_at ? displaySentAt(request.created_at, "en") : "Unknown"}</span>
+            </div>
+
+            {request.audio_url ? <AudioPlayer src={request.audio_url} /> : <p className="alert">Original audio URL is missing.</p>}
           </div>
-          <SafetyNote>{text.safety}</SafetyNote>
+
+          <SafetyNote>Provider action updates the request status in Supabase and refreshes this dashboard card.</SafetyNote>
+
+          <div className="actions">
+            <ActionButton onClick={() => void setStatus("accepted")} disabled={updating}>
+              Accept
+            </ActionButton>
+            <ActionButton variant="ghost" onClick={() => void setStatus("clarification_requested")} disabled={updating}>
+              Ask for Clarification
+            </ActionButton>
+            <ActionButton variant="ghost" onClick={() => void setStatus("completed")} disabled={updating}>
+              Mark Completed
+            </ActionButton>
+          </div>
         </>
-      )}
-      <div className="actions">
+      ) : null}
+
+      <div className="actions" style={{ marginTop: 12 }}>
         <Link href="/requests" className="btn ghost">
-          {text.backToRequests}
+          Back to dashboard
         </Link>
       </div>
-    </PatientShell>
+      </PatientShell>
+    </RoleGuard>
   );
 }

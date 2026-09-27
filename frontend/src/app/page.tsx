@@ -1,38 +1,185 @@
 "use client";
 
+import { FormEvent, useState } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ActionButton } from "@/components/ActionButton";
-import { LanguageOption } from "@/components/LanguageOption";
 import { PatientShell } from "@/components/PatientShell";
 import { useRequest } from "@/context/RequestContext";
-import { getCopy } from "@/lib/copy";
-import { LANGUAGES } from "@/lib/languages";
+import { currentProviderSession, signInProvider } from "@/lib/supabaseBrowser";
 
-export default function LanguagePage() {
+function RoleCard({
+  eyebrow,
+  title,
+  body,
+  action,
+  onClick,
+  primary = false,
+  disabled = false,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  action: string;
+  onClick: () => void;
+  primary?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className={primary ? "role-card primary" : "role-card"}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <span className="role-eyebrow">{eyebrow}</span>
+      <span className="role-title">{title}</span>
+      <span className="role-body">{body}</span>
+      <span className="role-action">{action}</span>
+    </button>
+  );
+}
+
+export default function RoleSelectionPage() {
   const router = useRouter();
-  const { state, setLanguage } = useRequest();
-  const text = getCopy(state.language);
+  const { setRole } = useRequest();
+  const [showProviderLogin, setShowProviderLogin] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [checkingProvider, setCheckingProvider] = useState(false);
+  const [authError, setAuthError] = useState("");
+
+  function enterPatientPortal() {
+    setRole("patient");
+    router.push("/home");
+  }
+
+  function closeProviderLogin() {
+    if (checkingProvider) return;
+    setAuthError("");
+    setPassword("");
+    setShowProviderLogin(false);
+  }
+
+  async function openProviderPortal() {
+    setCheckingProvider(true);
+    setAuthError("");
+    try {
+      const session = await currentProviderSession();
+      if (session) {
+        flushSync(() => setRole("provider"));
+        router.replace("/requests");
+        return;
+      }
+      setShowProviderLogin(true);
+    } catch (error) {
+      setShowProviderLogin(true);
+      setAuthError(error instanceof Error ? error.message : "Could not verify the provider session.");
+    } finally {
+      setCheckingProvider(false);
+    }
+  }
+
+  async function submitProviderLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setCheckingProvider(true);
+    setAuthError("");
+    try {
+      await signInProvider(email.trim(), password);
+      flushSync(() => setRole("provider"));
+      router.replace("/requests");
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Provider sign-in failed.");
+    } finally {
+      setCheckingProvider(false);
+    }
+  }
 
   return (
     <PatientShell showLanguage={false}>
-      <h1 className="screen-title">{text.chooseLanguage}</h1>
-      <p className="screen-copy">{text.changeLater}</p>
-      <div>
-        {LANGUAGES.map((language) => (
-          <LanguageOption
-            key={language.code}
-            tag={language.tag}
-            title={language.title}
-            hint={language.hint}
-            urdu={language.urdu}
-            selected={state.language === language.code}
-            onSelect={() => setLanguage(language.code)}
-          />
-        ))}
-      </div>
-      <div className="actions">
-        <ActionButton onClick={() => router.push("/home")}>{text.continue}</ActionButton>
-      </div>
+      {showProviderLogin ? (
+        <section className="provider-login-view" aria-labelledby="provider-login-title">
+          <div className="welcome-hero provider-login-hero">
+            <span className="brand-pill">MarhamPattii Provider</span>
+            <h1 id="provider-login-title" className="screen-title center">Welcome back</h1>
+            <p className="screen-copy center">
+              Sign in securely to review incoming healthcare requests.
+            </p>
+          </div>
+
+          <form className="provider-login" onSubmit={(event) => void submitProviderLogin(event)}>
+            <label>
+              Email
+              <input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                autoFocus
+                disabled={checkingProvider}
+              />
+            </label>
+            <label>
+              Password
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                minLength={6}
+                disabled={checkingProvider}
+              />
+            </label>
+            {authError ? <p className="alert" role="alert">{authError}</p> : null}
+            <button className="primary-button" type="submit" disabled={checkingProvider}>
+              {checkingProvider ? "Signing in..." : "Sign in securely"}
+            </button>
+            <button
+              className="provider-login-back"
+              type="button"
+              onClick={closeProviderLogin}
+              disabled={checkingProvider}
+            >
+              Back to portal choices
+            </button>
+          </form>
+        </section>
+      ) : (
+        <>
+          <section className="welcome-hero">
+            <span className="brand-pill">MarhamPattii</span>
+            <h1 className="screen-title center">Choose your portal</h1>
+            <p className="screen-copy center">
+              A voice-first Balti healthcare bridge for patients and providers.
+            </p>
+          </section>
+
+          <div className="role-grid" aria-label="Choose your role">
+            <RoleCard
+              primary
+              eyebrow="For patients"
+              title="Patient Portal"
+              body="Record a Balti voice request and review what the system understood."
+              action="Start voice request"
+              onClick={enterPatientPortal}
+              disabled={checkingProvider}
+            />
+            <RoleCard
+              eyebrow="For providers"
+              title="Provider Dashboard"
+              body="Sign in to review requests, play original audio, and update request status."
+              action={checkingProvider ? "Checking session..." : "Provider sign in"}
+              onClick={() => void openProviderPortal()}
+              disabled={checkingProvider}
+            />
+          </div>
+
+          <p className="note">
+            Provider access requires a Supabase account with the server-controlled provider role.
+          </p>
+        </>
+      )}
     </PatientShell>
   );
 }

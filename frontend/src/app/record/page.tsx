@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { ActionButton } from "@/components/ActionButton";
 import { PatientShell } from "@/components/PatientShell";
+import { RoleGuard } from "@/components/RoleGuard";
 import { RecordingTimer } from "@/components/RecordingTimer";
 import { Waveform } from "@/components/Waveform";
 import { useRecorder } from "@/context/RecorderContext";
@@ -41,14 +42,24 @@ export default function RecordPage() {
     denied: { title: text.micNeeded, body: text.tapAllow, action: text.useMic },
     unavailable: { title: text.noMic, body: text.connectMic, action: text.tryAgain },
     unsupported: { title: text.recordingUnavailable, body: text.openBrowser, action: text.tryAgain },
-    "too-short": { title: text.tooShort, body: text.speakLonger, action: text.recordAgain },
+    "too-short": {
+      title: text.tooShort,
+      body: "Please record for at least a few seconds.",
+      action: text.recordAgain,
+    },
     silent: { title: text.silentTitle, body: text.silentBody, action: text.recordAgain },
+    "invalid-audio": {
+      title: text.micFailed,
+      body: "Recording failed or the audio format is unsupported. Please try again.",
+      action: text.recordAgain,
+    },
     error: { title: text.micFailed, body: text.tryAgain, action: text.tryAgain },
   };
   const error = errors[phase];
 
   return (
-    <PatientShell>
+    <RoleGuard role="patient">
+      <PatientShell>
       {phase === "recording" || phase === "starting" ? (
         <>
           <div className="rec-label">
@@ -83,6 +94,7 @@ export default function RecordPage() {
           </div>
         </>
       ) : null}
-    </PatientShell>
+      </PatientShell>
+    </RoleGuard>
   );
 }

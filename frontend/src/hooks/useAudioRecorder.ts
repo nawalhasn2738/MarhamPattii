@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { validateAudioBlob } from "@/lib/audio";
 
 const MAX_SECONDS = 60;
+const MIN_RECORDING_MS = 2_000;
 
 export type RecorderPhase =
   | "idle"
@@ -13,6 +15,7 @@ export type RecorderPhase =
   | "unsupported"
   | "too-short"
   | "silent"
+  | "invalid-audio"
   | "error";
 
 function pickMimeType() {
@@ -156,7 +159,21 @@ export function useAudioRecorder(onComplete: (blob: Blob, durationSeconds: numbe
         const silent = measuredRef.current && loudFramesRef.current === 0;
         releaseStream();
         if (!stoppedByUserRef.current || !aliveRef.current) return;
-        if (elapsedMs < 1000 || blob.size < 400) {
+        if (process.env.NODE_ENV !== "production") {
+          console.info("[audio diagnostic]", {
+            sizeBytes: blob.size,
+            durationSeconds: Number((elapsedMs / 1000).toFixed(2)),
+            mimeType: blob.type || "(empty)",
+            chunks: chunksRef.current.length,
+          });
+        }
+
+        const validation = validateAudioBlob(blob);
+        if (!validation.ok) {
+          setPhase(validation.code === "audio_too_small" ? "too-short" : "invalid-audio");
+          return;
+        }
+        if (elapsedMs < MIN_RECORDING_MS) {
           setPhase("too-short");
           return;
         }
