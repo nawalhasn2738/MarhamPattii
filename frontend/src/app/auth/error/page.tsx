@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export default function AuthError() { return <section className="dashboard"><p className="eyebrow">ACCOUNT CONFIRMATION</p><h1>That link could not be verified.</h1><p>It may have expired or been opened in a different browser. Try signing in, or request a fresh confirmation through registration.</p><Link className="button" href="/login">Back to sign in</Link></section>; }

@@ -1,25 +1,16 @@
-import { createClient } from "@supabase/supabase-js";
-
-function requiredEnv(name: string): string {
-  const value = process.env[name];
-
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-
-  return value;
-}
-
-export function createServerSupabaseClient() {
-  const url = requiredEnv("NEXT_PUBLIC_SUPABASE_URL");
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    requiredEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
-
-  return createClient(url, key, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
+import 'server-only';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { publicConfig } from './config';
+// User scoped only. No service-role fallback.
+export async function createServerSupabaseClient() {
+  const store = await cookies();
+  const { url, key } = publicConfig();
+  return createServerClient(url, key, { cookies: {
+    getAll: () => store.getAll(),
+    setAll(values) {
+      try { values.forEach(({ name, value, options }) => store.set(name, value, options)); }
+      catch { /* Server components cannot write; proxy refreshes cookies. */ }
     },
-  });
+  } });
 }
